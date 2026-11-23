@@ -23,15 +23,47 @@ function check(callback) { callback(); assertions++; }
   check(() => assert.equal(document.querySelectorAll('.part').length, 8));
   check(() => assert.equal($('.state').value, '不明'));
   check(() => assert.equal(text('#sum'), '0'));
+  const expectedUrls = [
+    'https://aucfree.com/search?o=t2&q=RTX%205070',
+    'https://www.pc-koubou.jp/user_data/search.php?q=RTX%205070',
+    'https://www.dospara.co.jp/used?q=RTX%205070&lang=ja_JP&includeNotInventory=true',
+    'https://www.janpara.co.jp/sale/search/result/?KEYWORDS=RTX%205070',
+    'https://www.sofmap.com/product_list_parts.aspx?product_type=USED&keyword=RTX%205070',
+    'https://jp.mercari.com/search?keyword=RTX%205070'
+  ];
+  const opened = [];
+  window.open = (...args) => { opened.push(args); return null; };
+  check(() => assert.equal($('.open-major').disabled, true));
+  $('.open-major').click();
+  check(() => assert.equal(opened.length, 0));
+  set('#part-1-model', 'RTX 5070');
+  const links = [...document.querySelectorAll('.part:first-child .links a')];
+  expectedUrls.forEach((url, index) => check(() => assert.equal(links[index].href, url)));
+  check(() => assert.equal(document.querySelectorAll('.primary-links a').length, 3));
+  check(() => assert.equal(document.querySelectorAll('.other-links a').length, 3));
+  check(() => assert.equal($('.links details').open, false));
+  check(() => assert.equal($('.links summary').textContent, '他のサイト'));
+  check(() => assert.equal($('.open-major').disabled, false));
+  $('.open-major').click();
+  check(() => assert.deepEqual(opened.map(args => args[0]), expectedUrls.slice(0, 3)));
+  check(() => assert.ok(opened.every(args => args[1] === '_blank' && args[2] === 'noopener,noreferrer')));
+  check(() => assert.ok(links.every(link => link.rel === 'noopener noreferrer')));
+  $('.links details').open = true;
   set('#part-1-model', 'Core i7 & <script>alert(1)</script> 日本語');
-  check(() => assert.equal(document.querySelectorAll('.links a').length, 7));
-  check(() => assert.equal(new URL($('.links a').href).searchParams.get('q'), 'site:aucfree.com Core i7 & <script>alert(1)</script> 日本語'));
+  check(() => assert.equal($('.links details').open, true));
+  check(() => assert.equal(document.querySelectorAll('.links a').length, 6));
+  check(() => assert.equal(new URL($('.links a').href).searchParams.get('q'), 'Core i7 & <script>alert(1)</script> 日本語'));
+  check(() => assert.equal(document.querySelectorAll('a[href*="google.com"],a[href*="pasotsuku.jp"]').length, 0));
+  $('.open-major').click();
+  check(() => assert.equal(new URL(opened[3][0]).searchParams.get('q'), 'Core i7 & <script>alert(1)</script> 日本語'));
   check(() => assert.equal(document.querySelectorAll('.links script').length, 0));
   check(() => assert.ok($('#memo').value.includes('Core i7 & <script>')));
   set('#part-1-price', '２０，０００');
   set('#part-2-price', '30,001');
   check(() => assert.equal(text('#sum'), '50,001'));
   check(() => assert.equal(text('#estimate'), '25,001'));
+  check(() => assert.equal(text('#sticky-sum'), text('#sum')));
+  check(() => assert.equal(text('#sticky-estimate'), text('#estimate')));
   set('#coefficient', '0.65');
   check(() => assert.equal(text('#estimate'), '32,501'));
   set('#part-1-state', 'ジャンク', 'change');
@@ -40,6 +72,8 @@ function check(callback) { callback(); assertions++; }
   check(() => assert.ok($('#memo').value.includes('/ ジャンク /')));
   set('#part-1-model', '');
   check(() => assert.equal(document.querySelectorAll('.links a').length, 0));
+  check(() => assert.equal($('.open-major').disabled, true));
+  check(() => assert.equal(document.querySelectorAll('.links details').length, 0));
   check(() => assert.ok(!$('#memo').value.includes('Core i7')));
   set('#part-1-price', '0');
   check(() => assert.ok($('#memo').value.includes('採用価格：0円')));
@@ -48,6 +82,8 @@ function check(callback) { callback(); assertions++; }
   for (const value of ['-1', '1.5', '1e3', '1,00', 'abc', '9007199254740992']) {
     set('#part-1-price', value);
     check(() => assert.equal(text('#sum'), '計算不可'));
+    check(() => assert.equal(text('#sticky-sum'), '計算不可'));
+    check(() => assert.equal(text('#sticky-estimate'), '計算不可'));
     check(() => assert.equal($('#part-1-price').getAttribute('aria-invalid'), 'true'));
   }
   set('#part-1-price', '1');
@@ -57,6 +93,7 @@ function check(callback) { callback(); assertions++; }
   for (const value of ['', '-1', '1.01', 'NaN', '0.12345']) {
     set('#coefficient', value);
     check(() => assert.equal(text('#estimate'), '計算不可'));
+    check(() => assert.equal(text('#sticky-estimate'), '計算不可'));
   }
   set('#coefficient', '０．５０');
   check(() => assert.equal(text('#estimate'), '1'));
@@ -98,6 +135,7 @@ function check(callback) { callback(); assertions++; }
   check(() => assert.equal(text('#print-memo'), $('#memo').value));
   while ($('.delete')) $('.delete').click();
   check(() => assert.equal(text('#sum'), '0'));
+  check(() => assert.equal(text('#sticky-sum'), '0'));
   check(() => assert.equal($('#empty').hidden, false));
   check(() => assert.equal(document.activeElement.id, 'add'));
   $('#add').click();

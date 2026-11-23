@@ -10,6 +10,12 @@
   <script src="app.js" defer></script>
 </head>
 <body>
+<aside class="sticky-summary" aria-label="合算と目安の固定表示">
+  <div class="sticky-inner">
+    <div><span>売価合算</span><p><strong id="sticky-sum">0</strong> 円</p></div>
+    <div><span>買取目安（参考値）</span><p><strong id="sticky-estimate">0</strong> 円</p></div>
+  </div>
+</aside>
 <main>
   <header>
     <p class="eyebrow">自作PC買取の査定補助</p>
@@ -27,7 +33,7 @@
     </div>
     <div id="rows"></div>
     <p id="empty" class="hint" hidden>パーツがありません。「パーツを追加」から入力してください。</p>
-    <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンクを開くと、その行の型番がGoogleに送信されます（別タブ）。価格・状態は送信しません。</p>
+    <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンク・一括オープンを使うと、その行の型番が各リンク先サイトに送信されます（別タブ）。価格・状態は送信しません。<br>一括オープンは主要3サイトを開きます。ポップアップがブロックされる場合は、各サイトのリンクから開いてください。</p>
   </section>
   <section class="summary" aria-labelledby="summary-title">
     <div class="total"><h2 id="summary-title">売価合算</h2><p class="money"><span id="sum">0</span><small> 円</small></p><p id="price-status" class="hint"></p></div>

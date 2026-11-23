@@ -3,10 +3,12 @@
 const TYPES = ["CPU", "GPU", "RAM", "マザーボード", "SSD", "HDD", "電源", "ケース", "OS", "その他"];
 const STATES = ["不明", "動作品", "ジャンク"];
 const SITES = [
-  ["オークフリー", "aucfree.com"], ["パソコン工房", "pc-koubou.jp"],
-  ["ドスパラ", "dospara.co.jp"], ["パソツク", "pasotsuku.jp"],
-  ["じゃんぱら", "janpara.co.jp"], ["ソフマップ", "sofmap.com"],
-  ["メルカリ", "jp.mercari.com"]
+  ["オークフリー", q => `https://aucfree.com/search?o=t2&q=${q}`],
+  ["パソコン工房", q => `https://www.pc-koubou.jp/user_data/search.php?q=${q}`],
+  ["ドスパラ", q => `https://www.dospara.co.jp/used?q=${q}&lang=ja_JP&includeNotInventory=true`],
+  ["じゃんぱら", q => `https://www.janpara.co.jp/sale/search/result/?KEYWORDS=${q}`],
+  ["ソフマップ", q => `https://www.sofmap.com/product_list_parts.aspx?product_type=USED&keyword=${q}`],
+  ["メルカリ", q => `https://jp.mercari.com/search?keyword=${q}`]
 ];
 // 将来の書き出しにも使える、パーツごとの素直な配列。未入力の価格は null。
 const parts = [];
@@ -57,6 +59,8 @@ function update() {
   const estimate = !invalid && units !== null ? (sum * BigInt(units) + 5000n) / 10000n : null;
   document.querySelector("#sum").textContent = invalid ? "計算不可" : yen(sum);
   document.querySelector("#estimate").textContent = estimate === null ? "計算不可" : yen(estimate);
+  document.querySelector("#sticky-sum").textContent = document.querySelector("#sum").textContent;
+  document.querySelector("#sticky-estimate").textContent = document.querySelector("#estimate").textContent;
   const status = `全${parts.length}行・価格未入力${missing}行${invalid ? "・価格の入力エラーがあります" : "（未入力は合算対象外）"}`;
   document.querySelector("#price-status").textContent = status;
   document.querySelector("#empty").hidden = parts.length !== 0;
@@ -73,22 +77,34 @@ function update() {
 
 function refreshLinks(element, model) {
   const container = element.querySelector(".links");
+  const expanded = container.querySelector("details")?.open || false;
   container.replaceChildren();
+  element.querySelector(".open-major").disabled = !model.trim();
   if (!model.trim()) {
     const hint = document.createElement("span");
-    hint.textContent = "型番を入力すると、7サイトの検索リンクが表示されます。";
+    hint.textContent = "型番を入力すると、各サイトの検索リンクが表示されます。";
     container.append(hint);
     return;
   }
-  for (const [name, domain] of SITES) {
+  const primaryLinks = document.createElement("div");
+  primaryLinks.className = "primary-links";
+  const otherSites = document.createElement("details");
+  otherSites.open = expanded;
+  const summary = document.createElement("summary");
+  summary.textContent = "他のサイト";
+  const otherLinks = document.createElement("div");
+  otherLinks.className = "other-links";
+  otherSites.append(summary, otherLinks);
+  for (const [index, [name, searchUrl]] of SITES.entries()) {
     const link = document.createElement("a");
     link.textContent = name;
-    link.href = `https://www.google.com/search?q=${encodeURIComponent(`site:${domain} ${model.trim()}`)}`;
+    link.href = searchUrl(encodeURIComponent(model.trim()));
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.setAttribute("aria-label", `${name}で「${model.trim()}」を検索（別タブ）`);
-    container.append(link);
+    (index < 3 ? primaryLinks : otherLinks).append(link);
   }
+  container.append(primaryLinks, otherSites);
 }
 
 let nextId = 0;
@@ -104,7 +120,15 @@ function addPart(type = "その他", focus = true) {
     <div class="field-state"><label for="${id}-state">状態</label><select id="${id}-state" class="state"></select></div>
     <div class="field-price"><label for="${id}-price">採用価格（円）</label><input id="${id}-price" class="price" type="text" inputmode="numeric" autocomplete="off" placeholder="未入力" aria-describedby="${id}-error"><p id="${id}-error" class="price-error error"></p></div>
     <button type="button" class="delete">削除</button>
-    </div><div class="links"></div>`;
+    </div><div class="search-controls"><button type="button" class="open-major" disabled>主要サイトを一括で開く</button><div class="links"></div></div>`;
+  element.querySelector(".open-major").addEventListener("click", () => {
+    const model = part.model.trim();
+    if (!model) return;
+    // クリック中に同期して開く。ブラウザーが制限する場合は個別リンクを使う。
+    for (const [, searchUrl] of SITES.slice(0, 3)) {
+      window.open(searchUrl(encodeURIComponent(model)), "_blank", "noopener,noreferrer");
+    }
+  });
   for (const [selector, values, selected] of [[".type", TYPES, type], [".state", STATES, "不明"]]) {
     const select = element.querySelector(selector);
     values.forEach(value => select.add(new Option(value, value)));
