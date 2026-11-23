@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>自作PC買取｜パーツ合算ツール</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">自作PC買取の査定補助</p>
+    <h1>パーツ合算ツール</h1>
+    <p class="intro">型番を調べ、採用する売価を入力。パーツの合算から買取の目安を確認できます。</p>
+  </header>
+  <aside class="notice" aria-label="査定に関する注意">
+    <strong>合算は売価の合計であり、査定額そのものではありません。</strong>
+    <span>買取目安は参考値です。状態・動作・付属品を確認し、最終判断は人が行ってください。</span>
+  </aside>
+  <section class="workspace" aria-labelledby="parts-title">
+    <div class="section-heading">
+      <div><h2 id="parts-title">パーツ入力</h2><p class="hint">Tabで次の項目へ · Ctrl / ⌘ + Enterで行追加</p></div>
+      <button id="add" type="button" class="primary" aria-keyshortcuts="Control+Enter Meta+Enter">＋ パーツを追加</button>
+    </div>
+    <div id="rows"></div>
+    <p id="empty" class="hint" hidden>パーツがありません。「パーツを追加」から入力してください。</p>
+    <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンクを開くと、その行の型番がGoogleに送信されます（別タブ）。価格・状態は送信しません。</p>
+  </section>
+  <section class="summary" aria-labelledby="summary-title">
+    <div class="total"><h2 id="summary-title">売価合算</h2><p class="money"><span id="sum">0</span><small> 円</small></p><p id="price-status" class="hint"></p></div>
+    <div class="factor"><label for="coefficient">係数</label><input id="coefficient" type="text" inputmode="decimal" value="0.50" autocomplete="off" spellcheck="false" aria-describedby="coefficient-help coefficient-error"><p id="coefficient-help" class="hint">0〜1、小数4桁まで。初期値は仮の例です。</p><p id="coefficient-error" class="error"></p></div>
+    <div class="estimate"><h2>買取目安 <span class="badge">参考値</span></h2><p class="money"><span id="estimate">0</span><small> 円</small></p><p class="hint">売価合算 × 係数（1円未満を四捨五入）</p></div>
+  </section>
+  <section class="memo-section" aria-labelledby="memo-title">
+    <div class="section-heading"><div><h2 id="memo-title">査定メモ</h2><p class="hint">コピー・印刷前に、未入力の価格がないか確認してください。</p></div><div class="actions"><button id="copy" type="button" class="primary">メモをコピー</button><button id="print" type="button">印刷</button></div></div>
+    <textarea id="memo" rows="8" readonly aria-label="査定メモのテキスト" spellcheck="false"></textarea>
+    <pre id="print-memo"></pre>
+    <p id="copy-status" role="status" aria-live="polite"></p>
+  </section>
+  <footer>外部の価格は自動取得しません。各サイトの情報を確認し、採用価格を手入力してください。</footer>
+</main>
+</body>
+</html>
