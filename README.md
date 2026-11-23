@@ -1,5 +1,9 @@
 # 自作PC買取 パーツ合算ツール
 
+公開URL：[パーツ合算ツールを開く](https://thousandplsme.github.io/pc-parts-total-tool/)
+
+GitHub Pagesで公開済みです。スマートフォン・PCのブラウザーから利用できます。
+
 パーツごとの売価を手入力して合算し、編集可能な係数を掛けた「買取目安（参考値）」を確認する、日本語の査定補助ツールです。
 
 **合算は売価の合計であり、査定額そのものではありません。最終判断は人が行います。**
@@ -37,7 +41,7 @@
 
 ## GitHub Pagesで公開する
 
-ポートフォリオ本体の `thousandplsme.github.io` には入れず、**別リポジトリ `pc-parts-total-tool`** を作成します。現在のフォルダーではGitを初期化していません。
+ポートフォリオ本体の `thousandplsme.github.io` には入れず、**別リポジトリ `pc-parts-total-tool`** を使用しています。別環境で公開する場合の手順は以下のとおりです。
 
 1. GitHubで新しい公開リポジトリ `pc-parts-total-tool` を作成します。
 2. `index.html`、`styles.css`、`app.js`、`.nojekyll`、`README.md` をリポジトリのルートにアップロードし、`main` ブランチにコミットします。GitHubのファイルアップロード画面でも構いません。旧試作と検証用ファイルの公開は不要です。
@@ -46,7 +50,7 @@
 5. デプロイ完了後、Pagesに表示されるURLを開きます。ユーザー名が `thousandplsme` の場合、通常は `https://thousandplsme.github.io/pc-parts-total-tool/` です。
 6. 更新時は同じブランチのファイルを変更してコミットします。
 
-CSS/JSは相対パスなので、リポジトリ名がURLの途中に入るプロジェクトサイトでも動作します。手順の根拠：[GitHub公式・公開元の設定](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。この作業ではリポジトリ作成・push・公開は行っていません。
+CSS/JSは相対パスなので、リポジトリ名がURLの途中に入るプロジェクトサイトでも動作します。手順の根拠：[GitHub公式・公開元の設定](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。2026-11-23に別リポジトリへアップロードし、main / (root) を公開元として設定しました。
 
 ## 構成と設計判断
 
@@ -54,7 +58,7 @@ CSS/JSは相対パスなので、リポジトリ名がURLの途中に入るプ�
 - `styles.css`：PCでは横並び、900px以下では折り返し、540px以下では縦中心。状態を含めて入力項目を隠しません。
 - `app.js`：パーツを `{ type, model, state, price }` の配列で保持します。価格の未入力は `null`。入力文字列の検証は画面側で行い、将来のCSV等に向けた専用機能は設けていません。
 - 印刷は入力欄のスクロール領域を印刷せず、同じ内容のテキストを全文展開します。長い型番は折り返します。
-- 既存の `pc-parts-total-tool-v0.html` は変更せず残しています。使用・公開の入口は `index.html` です。
+- 既存の `pc-parts-total-tool-v0.html` はローカルに変更せず残し、公開リポジトリには含めていません。使用・公開の入口は `index.html` です。
 
 将来構想として、価格相場グラフ、価格の自動取得とリスト表示、AIによる推奨価格が考えられますが、価格データの蓄積前なので今回は実装・ダミー表示ともに対象外です。
 
