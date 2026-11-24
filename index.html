@@ -6,14 +6,14 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>自作PC買取｜パーツ合算ツール</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261124-1">
+  <script src="app.js?v=20261124-1" defer></script>
 </head>
 <body>
 <aside class="sticky-summary" aria-label="合算と目安の固定表示">
   <div class="sticky-inner">
     <div><span>売価合算</span><p><strong id="sticky-sum">0</strong> 円</p></div>
-    <div><span>買取目安（参考値）</span><p><strong id="sticky-estimate">0</strong> 円</p></div>
+    <div><span>買取目安（参考値）</span><p><strong id="sticky-estimate">0</strong> 円</p><p class="kake-description hint">5掛け（売価の50%）</p></div>
   </div>
 </aside>
 <main>
@@ -33,12 +33,12 @@
     </div>
     <div id="rows"></div>
     <p id="empty" class="hint" hidden>パーツがありません。「パーツを追加」から入力してください。</p>
-    <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンク・一括オープンを使うと、その行の型番が各リンク先サイトに送信されます（別タブ）。価格・状態は送信しません。<br>一括オープンは主要3サイトを開きます。ポップアップがブロックされる場合は、各サイトのリンクから開いてください。</p>
+    <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンク・「次のサイトを開く」を使うと、その行の型番が各リンク先サイトに送信されます（別タブ）。価格・状態は送信しません。<br>「次のサイトを開く」はオークフリー、パソコン工房、ドスパラを1クリックにつき1サイトずつ開きます。型番を変更すると順番は最初に戻ります。</p>
   </section>
   <section class="summary" aria-labelledby="summary-title">
-    <div class="total"><h2 id="summary-title">売価合算</h2><p class="money"><span id="sum">0</span><small> 円</small></p><p id="price-status" class="hint"></p></div>
-    <div class="factor"><label for="coefficient">係数</label><input id="coefficient" type="text" inputmode="decimal" value="0.50" autocomplete="off" spellcheck="false" aria-describedby="coefficient-help coefficient-error"><p id="coefficient-help" class="hint">0〜1、小数4桁まで。初期値は仮の例です。</p><p id="coefficient-error" class="error"></p></div>
-    <div class="estimate"><h2>買取目安 <span class="badge">参考値</span></h2><p class="money"><span id="estimate">0</span><small> 円</small></p><p class="hint">売価合算 × 係数（1円未満を四捨五入）</p></div>
+    <div class="total"><h2 id="summary-title">売価合算</h2><p class="money"><span id="sum">0</span><small> 円</small></p><p id="price-status" class="hint"></p><p class="kake-description hint">5掛け（売価の50%）</p></div>
+    <div class="factor"><label for="kake">掛け</label><input id="kake" type="text" inputmode="decimal" value="5" autocomplete="off" spellcheck="false" aria-describedby="kake-help kake-error"><p class="kake-description hint">5掛け（売価の50%）</p><p id="kake-help" class="hint">0〜10、小数可。初期値の5掛けは仮の例です。</p><p id="kake-error" class="error"></p></div>
+    <div class="estimate"><h2>買取目安 <span class="badge">参考値</span></h2><p class="money"><span id="estimate">0</span><small> 円</small></p><p class="kake-description hint">5掛け（売価の50%）</p><p class="hint">売価合算 ×（掛け ÷ 10）（1円未満を四捨五入）</p></div>
   </section>
   <section class="memo-section" aria-labelledby="memo-title">
     <div class="section-heading"><div><h2 id="memo-title">査定メモ</h2><p class="hint">コピー・印刷前に、未入力の価格がないか確認してください。</p></div><div class="actions"><button id="copy" type="button" class="primary">メモをコピー</button><button id="print" type="button">印刷</button></div></div>

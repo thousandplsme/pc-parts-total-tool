@@ -13,7 +13,7 @@ const SITES = [
 // 将来の書き出しにも使える、パーツごとの素直な配列。未入力の価格は null。
 const parts = [];
 const rows = document.querySelector("#rows");
-const coefficient = document.querySelector("#coefficient");
+const kake = document.querySelector("#kake");
 const memo = document.querySelector("#memo");
 const yen = value => value.toLocaleString("ja-JP");
 const normalize = value => value.trim().replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/．/g, ".").replace(/，/g, ",");
@@ -27,10 +27,19 @@ function parsePrice(raw) {
   return { value, error: "" };
 }
 
-function getCoefficient() {
-  const text = normalize(coefficient.value);
-  const valid = /^(?:0(?:\.\d{1,4})?|1(?:\.0{1,4})?)$/.test(text);
-  return valid ? Math.round(Number(text) * 10000) : null;
+function getKake() {
+  const text = normalize(kake.value);
+  if (!/^\d+(?:\.\d+)?$/.test(text)) return null;
+  const [integer, decimal = ""] = text.split(".");
+  const whole = BigInt(integer).toString();
+  const fraction = decimal.replace(/0+$/, "");
+  const scale = 10n ** BigInt(fraction.length);
+  const numerator = BigInt(whole + fraction);
+  if (numerator > 10n * scale) return null;
+  const amount = whole + (fraction ? `.${fraction}` : "");
+  const percentWhole = BigInt(whole) * 10n + BigInt(fraction[0] || "0");
+  const percent = String(percentWhole) + (fraction.length > 1 ? `.${fraction.slice(1)}` : "");
+  return { numerator, denominator: scale * 10n, label: `${amount}掛け（売価の${percent}%）` };
 }
 
 function update() {
@@ -51,12 +60,13 @@ function update() {
     const price = result.error ? "入力エラー" : part.price === null ? "未入力" : `${yen(part.price)}円`;
     return `${index + 1}. ${part.type} / ${model} / ${part.state} / 採用価格：${price}`;
   });
-  const units = getCoefficient();
-  const coefficientError = units === null ? "0〜1の数値を小数4桁以内で入力してください。" : "";
-  coefficient.setAttribute("aria-invalid", String(units === null));
-  document.querySelector("#coefficient-error").textContent = coefficientError;
+  const rate = getKake();
+  kake.setAttribute("aria-invalid", String(rate === null));
+  document.querySelector("#kake-error").textContent = rate === null ? "0〜10の数値を入力してください（小数可）。" : "";
+  const rateLabel = rate === null ? "掛け：入力エラー" : rate.label;
+  document.querySelectorAll(".kake-description").forEach(element => { element.textContent = rateLabel; });
   // 整数計算で、円未満の四捨五入と大きな合計金額の精度を保つ。
-  const estimate = !invalid && units !== null ? (sum * BigInt(units) + 5000n) / 10000n : null;
+  const estimate = !invalid && rate !== null ? (sum * rate.numerator + rate.denominator / 2n) / rate.denominator : null;
   document.querySelector("#sum").textContent = invalid ? "計算不可" : yen(sum);
   document.querySelector("#estimate").textContent = estimate === null ? "計算不可" : yen(estimate);
   document.querySelector("#sticky-sum").textContent = document.querySelector("#sum").textContent;
@@ -66,9 +76,9 @@ function update() {
   document.querySelector("#empty").hidden = parts.length !== 0;
   memo.value = ["自作PC買取 査定メモ", ...lines, "", status,
     `売価合算：${invalid ? "計算不可（価格を修正してください）" : `${yen(sum)}円`}`,
-    `係数：${units === null ? "入力エラー" : normalize(coefficient.value)}`,
+    `掛け：${rate === null ? "入力エラー" : rate.label}`,
     `買取目安（参考値）：${estimate === null ? "計算不可" : `${yen(estimate)}円`}`,
-    "※目安は売価合算×係数、1円未満を四捨五入。",
+    "※目安は売価合算×（掛け÷10）、1円未満を四捨五入。",
     "※合算は売価の合計であり、査定額そのものではありません。最終判断は人が行います。"
   ].join("\n");
   document.querySelector("#print-memo").textContent = memo.value;
@@ -120,14 +130,17 @@ function addPart(type = "その他", focus = true) {
     <div class="field-state"><label for="${id}-state">状態</label><select id="${id}-state" class="state"></select></div>
     <div class="field-price"><label for="${id}-price">採用価格（円）</label><input id="${id}-price" class="price" type="text" inputmode="numeric" autocomplete="off" placeholder="未入力" aria-describedby="${id}-error"><p id="${id}-error" class="price-error error"></p></div>
     <button type="button" class="delete">削除</button>
-    </div><div class="search-controls"><button type="button" class="open-major" disabled>主要サイトを一括で開く</button><div class="links"></div></div>`;
+    </div><div class="search-controls"><button type="button" class="open-major" disabled>次のサイトを開く</button><span class="site-progress" role="status">0/3 まだ開いていません</span><div class="links"></div></div>`;
+  let nextSite = 0;
   element.querySelector(".open-major").addEventListener("click", () => {
     const model = part.model.trim();
     if (!model) return;
-    // クリック中に同期して開く。ブラウザーが制限する場合は個別リンクを使う。
-    for (const [, searchUrl] of SITES.slice(0, 3)) {
-      window.open(searchUrl(encodeURIComponent(model)), "_blank", "noopener,noreferrer");
-    }
+    // 1クリックにつき1タブだけを同期して開く。
+    const [name, searchUrl] = SITES[nextSite];
+    window.open(searchUrl(encodeURIComponent(model)), "_blank", "noopener,noreferrer");
+    element.querySelector(".site-progress").textContent = nextSite === 2
+      ? "3サイトとも開いた" : `${nextSite + 1}/3 ${name}まで開いた`;
+    nextSite = (nextSite + 1) % 3;
   });
   for (const [selector, values, selected] of [[".type", TYPES, type], [".state", STATES, "不明"]]) {
     const select = element.querySelector(selector);
@@ -138,6 +151,8 @@ function addPart(type = "その他", focus = true) {
   element.querySelector(".state").addEventListener("change", event => { part.state = event.target.value; update(); });
   element.querySelector(".model").addEventListener("input", event => {
     part.model = event.target.value;
+    nextSite = 0;
+    element.querySelector(".site-progress").textContent = "0/3 まだ開いていません";
     refreshLinks(element, part.model);
     update();
   });
@@ -171,7 +186,7 @@ document.addEventListener("keydown", event => {
     addPart();
   }
 });
-coefficient.addEventListener("input", update);
+kake.addEventListener("input", update);
 document.querySelector("#print").addEventListener("click", () => window.print());
 document.querySelector("#copy").addEventListener("click", async () => {
   const text = memo.value;

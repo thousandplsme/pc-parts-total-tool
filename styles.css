@@ -1,7 +1,7 @@
 :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", "Meiryo", sans-serif; color: #182b3c; background: #f2f5f7; line-height: 1.6; }
 * { box-sizing: border-box; }
 body { margin: 0; }
-html { scroll-padding-top: 110px; }
+html { scroll-padding-top: 140px; }
 .sticky-summary { position: sticky; top: 0; z-index: 20; background: #eaf4f1; border-bottom: 1px solid #a6c8c0; }
 .sticky-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 1220px; margin: auto; padding: 8px 24px; }
 .sticky-inner > div { min-width: 0; }
@@ -36,6 +36,7 @@ label { display: block; font-size: .875rem; font-weight: 600; margin-bottom: 5px
 .delete { margin-top: 27px; color: #96413d; }
 .search-controls { margin-top: 10px; }
 .open-major { padding: 6px 10px; font-size: .875rem; margin-bottom: 6px; }
+.site-progress { display: inline-block; margin: 0 0 6px 10px; font-size: .875rem; color: #526270; }
 .links, .primary-links, .other-links { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; }
 .links details { font-size: .875rem; }
 .links summary { cursor: pointer; color: #176778; padding: 2px 0; }

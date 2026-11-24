@@ -45,17 +45,33 @@ function check(callback) { callback(); assertions++; }
   check(() => assert.equal($('.links summary').textContent, '他のサイト'));
   check(() => assert.equal($('.open-major').disabled, false));
   $('.open-major').click();
+  check(() => assert.equal(opened.length, 1));
+  check(() => assert.equal($('.site-progress').textContent, '1/3 オークフリーまで開いた'));
+  $('.open-major').click();
+  check(() => assert.equal(opened.length, 2));
+  check(() => assert.equal($('.site-progress').textContent, '2/3 パソコン工房まで開いた'));
+  $('.open-major').click();
+  check(() => assert.equal($('.site-progress').textContent, '3サイトとも開いた'));
   check(() => assert.deepEqual(opened.map(args => args[0]), expectedUrls.slice(0, 3)));
+  $('.open-major').click();
+  check(() => assert.equal(opened[3][0], expectedUrls[0]));
+  check(() => assert.equal($('.site-progress').textContent, '1/3 オークフリーまで開いた'));
+  set('#part-2-model', 'RTX 5070');
+  document.querySelectorAll('.open-major')[1].click();
+  check(() => assert.equal(opened[4][0], expectedUrls[0]));
+  check(() => assert.equal($('.site-progress').textContent, '1/3 オークフリーまで開いた'));
+  set('#part-2-model', '');
   check(() => assert.ok(opened.every(args => args[1] === '_blank' && args[2] === 'noopener,noreferrer')));
   check(() => assert.ok(links.every(link => link.rel === 'noopener noreferrer')));
   $('.links details').open = true;
   set('#part-1-model', 'Core i7 & <script>alert(1)</script> 日本語');
+  check(() => assert.equal($('.site-progress').textContent, '0/3 まだ開いていません'));
   check(() => assert.equal($('.links details').open, true));
   check(() => assert.equal(document.querySelectorAll('.links a').length, 6));
   check(() => assert.equal(new URL($('.links a').href).searchParams.get('q'), 'Core i7 & <script>alert(1)</script> 日本語'));
   check(() => assert.equal(document.querySelectorAll('a[href*="google.com"],a[href*="pasotsuku.jp"]').length, 0));
   $('.open-major').click();
-  check(() => assert.equal(new URL(opened[3][0]).searchParams.get('q'), 'Core i7 & <script>alert(1)</script> 日本語'));
+  check(() => assert.equal(new URL(opened[5][0]).searchParams.get('q'), 'Core i7 & <script>alert(1)</script> 日本語'));
   check(() => assert.equal(document.querySelectorAll('.links script').length, 0));
   check(() => assert.ok($('#memo').value.includes('Core i7 & <script>')));
   set('#part-1-price', '２０，０００');
@@ -64,7 +80,27 @@ function check(callback) { callback(); assertions++; }
   check(() => assert.equal(text('#estimate'), '25,001'));
   check(() => assert.equal(text('#sticky-sum'), text('#sum')));
   check(() => assert.equal(text('#sticky-estimate'), text('#estimate')));
-  set('#coefficient', '0.65');
+  set('#part-1-price', '110000');
+  set('#part-2-price', '0');
+  for (const [value, estimate, description] of [
+    ['5', '55,000', '5掛け（売価の50%）'],
+    ['4', '44,000', '4掛け（売価の40%）'],
+    ['4.5', '49,500', '4.5掛け（売価の45%）'],
+    ['0', '0', '0掛け（売価の0%）'],
+    ['10', '110,000', '10掛け（売価の100%）'],
+    ['0.005', '55', '0.005掛け（売価の0.05%）'],
+    ['04.5000', '49,500', '4.5掛け（売価の45%）']
+  ]) {
+    set('#kake', value);
+    check(() => assert.equal(text('#estimate'), estimate));
+    check(() => assert.equal(text('#sticky-estimate'), estimate));
+    check(() => assert.ok([...document.querySelectorAll('.kake-description')].every(el => el.textContent === description)));
+    check(() => assert.ok($('#memo').value.includes(`掛け：${description}`)));
+    check(() => assert.ok(!$('#memo').value.includes('係数')));
+  }
+  set('#part-1-price', '20000');
+  set('#part-2-price', '30001');
+  set('#kake', '6.5');
   check(() => assert.equal(text('#estimate'), '32,501'));
   set('#part-1-state', 'ジャンク', 'change');
   set('#part-1-type', 'その他', 'change');
@@ -88,14 +124,14 @@ function check(callback) { callback(); assertions++; }
   }
   set('#part-1-price', '1');
   set('#part-2-price', '0');
-  set('#coefficient', '0.5000');
+  set('#kake', '5.0000');
   check(() => assert.equal(text('#estimate'), '1'));
-  for (const value of ['', '-1', '1.01', 'NaN', '0.12345']) {
-    set('#coefficient', value);
+  for (const value of ['', '-1', '10.01', 'NaN', '1e1']) {
+    set('#kake', value);
     check(() => assert.equal(text('#estimate'), '計算不可'));
     check(() => assert.equal(text('#sticky-estimate'), '計算不可'));
   }
-  set('#coefficient', '０．５０');
+  set('#kake', '５．０');
   check(() => assert.equal(text('#estimate'), '1'));
   set('#part-1-price', '9007199254740991');
   set('#part-2-price', '9007199254740991');
