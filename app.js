@@ -152,7 +152,9 @@ function suggestCategory(model) {
 
 function refreshCategoryHint(element, part) {
   const hint = element.querySelector(".category-hint");
+  const modelSearch = element.querySelector(".model-search");
   hint.replaceChildren();
+  modelSearch.replaceChildren();
   if (!["その他", "不明"].includes(part.type) || !part.model.trim()) return;
   const candidate = suggestCategory(part.model);
   if (candidate) {
@@ -172,7 +174,7 @@ function refreshCategoryHint(element, part) {
     link.href = `https://www.google.com/search?q=${encodeURIComponent(part.model.trim())}`;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    hint.append(link);
+    modelSearch.append(link);
   }
 }
 
@@ -184,20 +186,28 @@ function addPart(type = "その他", focus = true, model = "") {
   element.className = "part";
   // 固定のUIだけをHTMLで構築。入力値はvalue/textContentに設定する。
   element.innerHTML = `<div class="fields">
-    <div class="field-type"><label for="${id}-type">種別</label><select id="${id}-type" class="type"></select><details class="viewing-points"><summary>見るポイント</summary><p></p></details></div>
+    <div class="field-type"><label for="${id}-type">種別</label><select id="${id}-type" class="type"></select></div>
     <div class="field-model"><label for="${id}-model">型番・仕様</label><input id="${id}-model" class="model" type="text" autocomplete="off" spellcheck="false" placeholder="例：Core i7-12700 / RTX 3060"><div class="category-hint"></div></div>
-    <div class="field-state"><label for="${id}-state">状態</label><select id="${id}-state" class="state"></select></div>
     <div class="field-price"><label for="${id}-price">採用価格（円）</label><input id="${id}-price" class="price" type="text" inputmode="numeric" autocomplete="off" placeholder="未入力" aria-describedby="${id}-error"><p id="${id}-error" class="price-error error"></p></div>
-    <button type="button" class="delete">削除</button>
-    </div><div class="search-controls"><button type="button" class="open-major" disabled>次のサイトを開く</button><span class="site-progress" role="status">0/3 まだ開いていません</span><button type="button" class="open-all" disabled aria-describedby="${id}-popup-note">主要3サイトを一括で開く</button><p class="hint popup-note" id="${id}-popup-note">一括オープンはブラウザのポップアップ許可が必要です。開かない場合は『次のサイトを開く』を使ってください</p><div class="links"></div></div>`;
+    <div class="field-next"><button type="button" class="open-major" disabled>次のサイトを開く</button><span class="site-progress" role="status">0/3 まだ開いていません</span></div>
+    </div>
+    <details class="row-details"><summary>詳細を開く</summary>
+      <div class="detail-controls"><div class="field-state"><label for="${id}-state">状態</label><select id="${id}-state" class="state"></select></div><button type="button" class="delete">削除</button></div>
+      <details class="viewing-points"><summary>見るポイント</summary><p></p></details>
+      <div class="model-search"></div>
+      <div class="search-controls"><button type="button" class="open-all" disabled aria-describedby="${id}-popup-note">主要3サイトを一括で開く</button><p class="hint popup-note" id="${id}-popup-note">一括オープンはブラウザのポップアップ許可が必要です。開かない場合は『次のサイトを開く』を使ってください</p><div class="links"></div></div>
+    </details>`;
+  let nextSite = 0;
   element.querySelector(".open-all").addEventListener("click", () => {
     const model = part.model.trim();
     if (!model) return;
     for (const [, searchUrl] of SITES.slice(0, 3)) {
       window.open(searchUrl(encodeURIComponent(model)), "_blank", "noopener,noreferrer");
     }
+    // noopener付きでは開けたタブ数を取得できないため、実行した3件を進捗に反映する。
+    element.querySelector(".site-progress").textContent = "3/3 一括オープンを実行";
+    nextSite = 0;
   });
-  let nextSite = 0;
   element.querySelector(".open-major").addEventListener("click", () => {
     const model = part.model.trim();
     if (!model) return;
@@ -256,6 +266,7 @@ function addPart(type = "その他", focus = true, model = "") {
 TYPES.slice(0, 8).forEach(type => addPart(type, false));
 document.querySelector("#add").addEventListener("click", () => addPart());
 document.querySelector("#import-parts").addEventListener("click", () => {
+  const firstNewIndex = parts.length;
   const lines = document.querySelector("#import-text").value.split(/\r\n|[\r\n]/).filter(line => line.trim());
   for (const line of lines) {
     const match = line.match(/^([^:：]+)[:：](.*)$/);
@@ -267,6 +278,40 @@ document.querySelector("#import-parts").addEventListener("click", () => {
   document.querySelector("#import-status").textContent = lines.length
     ? `${lines.length}行取り込みました（既存行の末尾に追加）。`
     : "取り込む行がありません（空行は除外します）。";
+  if (lines.length) {
+    document.querySelector("#parts-import-status").textContent = document.querySelector("#import-status").textContent;
+    showMode("parts");
+    rows.children[firstNewIndex].querySelector(".model").focus();
+  }
+});
+
+function showMode(mode) {
+  document.querySelectorAll(".mode-panel").forEach(panel => { panel.hidden = panel.id !== `panel-${mode}`; });
+  document.querySelectorAll('[role="tab"]').forEach(tab => {
+    const selected = tab.dataset.mode === mode;
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  document.querySelector(".sticky-summary").hidden = !["parts", "import"].includes(mode);
+  if (mode === "compatibility") document.querySelector(".compatibility-section").open = true;
+  if (mode === "help") document.querySelector(".research-help").open = true;
+  document.querySelector(`#panel-${mode}`).scrollIntoView?.({ block: "start" });
+}
+
+const modeTabs = [...document.querySelectorAll('[role="tab"]')];
+modeTabs.forEach((tab, index) => {
+  tab.addEventListener("click", () => showMode(tab.dataset.mode));
+  tab.addEventListener("keydown", event => {
+    let next;
+    if (event.key === "ArrowRight") next = (index + 1) % modeTabs.length;
+    if (event.key === "ArrowLeft") next = (index + modeTabs.length - 1) % modeTabs.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = modeTabs.length - 1;
+    if (next === undefined) return;
+    event.preventDefault();
+    showMode(modeTabs[next].dataset.mode);
+    modeTabs[next].focus();
+  });
 });
 document.addEventListener("keydown", event => {
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !event.isComposing && !event.repeat) {

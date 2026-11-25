@@ -6,17 +6,25 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>自作PC買取｜パーツ合算ツール</title>
-  <link rel="stylesheet" href="styles.css?v=20261125-3">
-  <script src="app.js?v=20261125-2" defer></script>
-  <script src="compatibility.js?v=20261125-3" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261125-4">
+  <script src="app.js?v=20261125-4" defer></script>
+  <script src="compatibility.js?v=20261125-4" defer></script>
 </head>
 <body>
+<div class="top-bars">
+  <nav class="mode-tabs" role="tablist" aria-label="モード切替">
+    <button id="tab-import" type="button" role="tab" aria-controls="panel-import" aria-selected="false" tabindex="-1" data-mode="import">メモから作る</button>
+    <button id="tab-parts" type="button" role="tab" aria-controls="panel-parts" aria-selected="true" data-mode="parts">パーツから入れる</button>
+    <button id="tab-compatibility" type="button" role="tab" aria-controls="panel-compatibility" aria-selected="false" tabindex="-1" data-mode="compatibility">互換性チェック</button>
+    <button id="tab-help" type="button" role="tab" aria-controls="panel-help" aria-selected="false" tabindex="-1" data-mode="help">ヘルプ</button>
+  </nav>
 <aside class="sticky-summary" aria-label="合算と目安の固定表示">
   <div class="sticky-inner">
     <div><span>売価合算</span><p><strong id="sticky-sum">0</strong> 円</p></div>
     <div><span>買取目安（参考値）</span><p><strong id="sticky-estimate">0</strong> 円</p><p class="kake-description hint">5掛け（売価の50%）</p></div>
   </div>
 </aside>
+</div>
 <main>
   <header>
     <p class="eyebrow">自作PC買取の査定補助</p>
@@ -27,6 +35,7 @@
     <strong>合算は売価の合計であり、査定額そのものではありません。</strong>
     <span>買取目安は参考値です。状態・動作・付属品を確認し、最終判断は人が行ってください。</span>
   </aside>
+  <div id="panel-compatibility" class="mode-panel" role="tabpanel" aria-labelledby="tab-compatibility" hidden>
   <details class="compatibility-section">
     <summary>互換性チェック</summary>
     <p class="hint">提示された対応表にもとづくCPUとチップセットの照合です。型番別のCPUサポート・BIOS条件はメーカー資料で確認してください。</p>
@@ -45,6 +54,8 @@
     <div id="compat-searches"></div>
     <p class="hint">検索リンクを開いた場合だけ、入力した型番がGoogleへ送られます。検索結果の自動取得は行いません。</p>
   </details>
+  </div>
+  <div id="panel-help" class="mode-panel" role="tabpanel" aria-labelledby="tab-help" hidden>
   <details class="research-help">
     <summary>パーツの調べ方（msinfo32／タスクマネージャー）</summary>
     <div class="help-text">■ msinfo32（システム情報）
@@ -61,6 +72,8 @@
 - 型番だけ控えて、このツールの「この型番を調べる」から調べる
 - ノートPCは型番シール（底面）も写真に撮っておくと後で確認できる</div>
   </details>
+  </div>
+  <div id="panel-import" class="mode-panel" role="tabpanel" aria-labelledby="tab-import" hidden>
   <section class="import-section" aria-labelledby="import-title">
     <h2 id="import-title">メモから取り込む</h2>
     <label for="import-text">スペックのメモ</label>
@@ -69,11 +82,14 @@
     <button id="import-parts" type="button" class="primary">取り込む</button>
     <p id="import-status" class="hint" role="status"></p>
   </section>
+  </div>
+  <div id="panel-parts" class="mode-panel" role="tabpanel" aria-labelledby="tab-parts">
   <section class="workspace" aria-labelledby="parts-title">
     <div class="section-heading">
       <div><h2 id="parts-title">パーツ入力</h2><p class="hint">Tabで次の項目へ · Ctrl / ⌘ + Enterで行追加</p></div>
       <button id="add" type="button" class="primary" aria-keyshortcuts="Control+Enter Meta+Enter">＋ パーツを追加</button>
     </div>
+    <p id="parts-import-status" class="hint" role="status"></p>
     <div id="rows"></div>
     <p id="empty" class="hint" hidden>パーツがありません。「パーツを追加」から入力してください。</p>
     <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンク・順次／一括オープンを使うと、その行の型番が各リンク先サイトに送信されます。「この型番を調べる」はGoogleに送信します（別タブ）。価格・状態は送信しません。<br>「次のサイトを開く」はオークフリー、パソコン工房、ドスパラを1クリックにつき1サイトずつ開きます。型番を変更すると順番は最初に戻ります。</p>
@@ -89,6 +105,7 @@
     <pre id="print-memo"></pre>
     <p id="copy-status" role="status" aria-live="polite"></p>
   </section>
+  </div>
   <footer>外部の価格は自動取得しません。各サイトの情報を確認し、採用価格を手入力してください。</footer>
 </main>
 </body>

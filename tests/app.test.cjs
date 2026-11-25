@@ -264,17 +264,17 @@ function check(callback) { callback(); assertions++; }
     setLastModel(model);
     check(() => assert.ok(last('.category-hint button').textContent.includes(`${category}を採用`)));
     check(() => assert.equal(last('.type').value, 'その他'));
-    check(() => assert.equal(last('.category-hint a'), null));
+    check(() => assert.equal(last('.model-search a'), null));
     if (category === '電源') check(() => assert.ok(last('.category-hint button').textContent.includes('弱い候補')));
   }
   setLastModel('RTX 3060');
   last('.open-major').click();
-  const progressBeforeBulk = last('.site-progress').textContent;
+
   const beforeBulk = opened.length;
   last('.open-all').click();
   check(() => assert.equal(opened.length, beforeBulk + 3));
   check(() => assert.deepEqual(opened.slice(-3).map(args => args[0]), expectedUrls.slice(0, 3).map(url => url.replace('5070','3060'))));
-  check(() => assert.equal(last('.site-progress').textContent, progressBeforeBulk));
+  check(() => assert.equal(last('.site-progress').textContent, '3/3 一括オープンを実行'));
   check(() => assert.equal(last('.open-all').textContent, '主要3サイトを一括で開く'));
   check(() => assert.equal(last('.popup-note').textContent, '一括オープンはブラウザのポップアップ許可が必要です。開かない場合は『次のサイトを開く』を使ってください'));
   last('.category-hint button').click();
@@ -290,8 +290,8 @@ function check(callback) { callback(); assertions++; }
   for (const model of ['型番不明 & 日本語', 'NVMe', 'WD Blue', 'SSD']) {
     setLastModel(model);
     check(() => assert.equal(last('.category-hint button'), null));
-    check(() => assert.equal(last('.category-hint a').href, `https://www.google.com/search?q=${encodeURIComponent(model)}`));
-    check(() => assert.equal(last('.category-hint a').textContent, 'この型番を調べる'));
+    check(() => assert.equal(last('.model-search a').href, `https://www.google.com/search?q=${encodeURIComponent(model)}`));
+    check(() => assert.equal(last('.model-search a').textContent, 'この型番を調べる'));
   }
   setLastModel('');
   check(() => assert.equal(last('.category-hint').textContent, ''));
@@ -303,7 +303,7 @@ function check(callback) { callback(); assertions++; }
     check(() => assert.equal(row.querySelector('.type').value, 'その他'));
     check(() => assert.ok(row.querySelector('.category-hint button').textContent.includes(['GPU','CPU','RAM'][index])));
   });
-  check(() => assert.equal(imported[3].querySelector('.category-hint a').textContent, 'この型番を調べる'));
+  check(() => assert.equal(imported[3].querySelector('.model-search a').textContent, 'この型番を調べる'));
   const expectedHelp = `■ msinfo32（システム情報）
 1. Windowsキー＋R を押す
 2. 「msinfo32」と入力して Enter
