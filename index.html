@@ -6,8 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>自作PC買取｜パーツ合算ツール</title>
-  <link rel="stylesheet" href="styles.css?v=20261125-2">
+  <link rel="stylesheet" href="styles.css?v=20261125-3">
   <script src="app.js?v=20261125-2" defer></script>
+  <script src="compatibility.js?v=20261125-3" defer></script>
 </head>
 <body>
 <aside class="sticky-summary" aria-label="合算と目安の固定表示">
@@ -26,6 +27,24 @@
     <strong>合算は売価の合計であり、査定額そのものではありません。</strong>
     <span>買取目安は参考値です。状態・動作・付属品を確認し、最終判断は人が行ってください。</span>
   </aside>
+  <details class="compatibility-section">
+    <summary>互換性チェック</summary>
+    <p class="hint">提示された対応表にもとづくCPUとチップセットの照合です。型番別のCPUサポート・BIOS条件はメーカー資料で確認してください。</p>
+    <div class="compat-inputs">
+      <div><label for="compat-cpu">CPU型番</label><input id="compat-cpu" type="text" placeholder="例：i5-12400F / Ryzen 5 3500" autocomplete="off" spellcheck="false"></div>
+      <div><label for="compat-board">マザーボード型番またはチップセット名</label><input id="compat-board" type="text" placeholder="例：PRIME H610M-K / A520" autocomplete="off" spellcheck="false"></div>
+    </div>
+    <p id="compat-cpu-info" class="compat-info"></p>
+    <p id="compat-board-info" class="compat-info"></p>
+    <div class="compat-verdict" aria-live="polite">
+      <p>CPUとマザーボード：<strong id="compat-result"></strong></p>
+      <p id="compat-reason"></p>
+    </div>
+    <p id="compat-memory-condition" class="compat-info"></p>
+    <p class="compat-memory-warning">メモリの『R』表記（例：PC4-2400R）はサーバー用（RDIMM）の可能性があり、一般向けマザーボードでは使えません</p>
+    <div id="compat-searches"></div>
+    <p class="hint">検索リンクを開いた場合だけ、入力した型番がGoogleへ送られます。検索結果の自動取得は行いません。</p>
+  </details>
   <details class="research-help">
     <summary>パーツの調べ方（msinfo32／タスクマネージャー）</summary>
     <div class="help-text">■ msinfo32（システム情報）
