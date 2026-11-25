@@ -271,10 +271,21 @@ function check(callback) { callback(); assertions++; }
   last('.open-major').click();
 
   const beforeBulk = opened.length;
+  const sequentialOpen = window.open;
+  window.open = (url, target) => {
+    assert.equal(url, 'about:blank');
+    const tab = { opener: window, document, location: { replace(destination) {
+      assert.equal(tab.opener, null);
+      assert.equal(document.head.lastElementChild.content, 'no-referrer');
+      opened.push([destination, target]);
+    } } };
+    return tab;
+  };
   last('.open-all').click();
+  window.open = sequentialOpen;
   check(() => assert.equal(opened.length, beforeBulk + 3));
   check(() => assert.deepEqual(opened.slice(-3).map(args => args[0]), expectedUrls.slice(0, 3).map(url => url.replace('5070','3060'))));
-  check(() => assert.equal(last('.site-progress').textContent, '3/3 一括オープンを実行'));
+  check(() => assert.equal(last('.site-progress').textContent, '3/3 一括で開きました'));
   check(() => assert.equal(last('.open-all').textContent, '主要3サイトを一括で開く'));
   check(() => assert.equal(last('.popup-note').textContent, '一括オープンはブラウザのポップアップ許可が必要です。開かない場合は『次のサイトを開く』を使ってください'));
   last('.category-hint button').click();
@@ -318,11 +329,11 @@ function check(callback) { callback(); assertions++; }
 - 型番だけ控えて、このツールの「この型番を調べる」から調べる
 - ノートPCは型番シール（底面）も写真に撮っておくと後で確認できる`;
   check(() => assert.equal($('.help-text').textContent, expectedHelp));
-  check(() => assert.equal($('.research-help').open, false));
-  $('.research-help summary').click();
-  check(() => assert.equal($('.research-help').open, true));
-  $('.research-help summary').click();
-  check(() => assert.equal($('.research-help').open, false));
+  check(() => assert.equal($('#guide-desktop details').open, false));
+  $('#guide-desktop details summary').click();
+  check(() => assert.equal($('#guide-desktop details').open, true));
+  $('#guide-desktop details summary').click();
+  check(() => assert.equal($('#guide-desktop details').open, false));
   console.log(`PASS: ${assertions} assertions (DOM integration; real browser/print/clipboard policies not simulated)`);
   window.close();
 })().catch(error => { console.error(error); process.exitCode = 1; window.close(); });

@@ -196,16 +196,29 @@ function addPart(type = "その他", focus = true, model = "") {
       <details class="viewing-points"><summary>見るポイント</summary><p></p></details>
       <div class="model-search"></div>
       <div class="search-controls"><button type="button" class="open-all" disabled aria-describedby="${id}-popup-note">主要3サイトを一括で開く</button><p class="hint popup-note" id="${id}-popup-note">一括オープンはブラウザのポップアップ許可が必要です。開かない場合は『次のサイトを開く』を使ってください</p><div class="links"></div></div>
-    </details>`;
+    </details>
+    <p class="popup-warning hint" role="status" hidden></p>`;
   let nextSite = 0;
+  const popupWarning = element.querySelector(".popup-warning");
   element.querySelector(".open-all").addEventListener("click", () => {
     const model = part.model.trim();
     if (!model) return;
+    let opened = 0;
     for (const [, searchUrl] of SITES.slice(0, 3)) {
-      window.open(searchUrl(encodeURIComponent(model)), "_blank", "noopener,noreferrer");
+      const tab = window.open("about:blank", "_blank");
+      if (!tab || tab.closed) continue;
+      // 外部ページへ移動する前に、元ページへの参照とリファラーを遮断する。
+      tab.opener = null;
+      const referrer = tab.document.createElement("meta");
+      referrer.name = "referrer";
+      referrer.content = "no-referrer";
+      tab.document.head.append(referrer);
+      tab.location.replace(searchUrl(encodeURIComponent(model)));
+      opened++;
     }
-    // noopener付きでは開けたタブ数を取得できないため、実行した3件を進捗に反映する。
-    element.querySelector(".site-progress").textContent = "3/3 一括オープンを実行";
+    element.querySelector(".site-progress").textContent = `${opened}/3 一括で開きました`;
+    popupWarning.hidden = opened === 3;
+    popupWarning.textContent = opened === 3 ? "" : "ポップアップがブロックされました。Chromeではアドレスバーの右端に表示されるアイコンから、このサイトのポップアップを許可してください。許可できない場合は『次のサイトを開く』を使ってください";
     nextSite = 0;
   });
   element.querySelector(".open-major").addEventListener("click", () => {
@@ -235,6 +248,8 @@ function addPart(type = "その他", focus = true, model = "") {
   element.querySelector(".model").addEventListener("input", event => {
     part.model = event.target.value;
     nextSite = 0;
+    popupWarning.hidden = true;
+    popupWarning.textContent = "";
     element.querySelector(".site-progress").textContent = "0/3 まだ開いていません";
     refreshLinks(element, part.model);
     refreshCategoryHint(element, part);
@@ -280,38 +295,62 @@ document.querySelector("#import-parts").addEventListener("click", () => {
     : "取り込む行がありません（空行は除外します）。";
   if (lines.length) {
     document.querySelector("#parts-import-status").textContent = document.querySelector("#import-status").textContent;
-    showMode("parts");
-    rows.children[firstNewIndex].querySelector(".model").focus();
+    selectMode(document.querySelector("#tab-parts"), { scrollToTop: false });
+    const firstModel = rows.children[firstNewIndex].querySelector(".model");
+    firstModel.scrollIntoView?.({ block: "center" });
+    firstModel.focus({ preventScroll: true });
   }
 });
 
-function showMode(mode) {
+function showMode(mode, { scrollToTop = true } = {}) {
   document.querySelectorAll(".mode-panel").forEach(panel => { panel.hidden = panel.id !== `panel-${mode}`; });
-  document.querySelectorAll('[role="tab"]').forEach(tab => {
-    const selected = tab.dataset.mode === mode;
-    tab.setAttribute("aria-selected", String(selected));
-    tab.tabIndex = selected ? 0 : -1;
-  });
-  document.querySelector(".sticky-summary").hidden = !["parts", "import"].includes(mode);
+  const showTotals = ["parts", "import"].includes(mode);
+  totalsBar.hidden = !showTotals;
+  document.body.classList.toggle("has-fixed-totals", showTotals);
   if (mode === "compatibility") document.querySelector(".compatibility-section").open = true;
-  if (mode === "help") document.querySelector(".research-help").open = true;
-  document.querySelector(`#panel-${mode}`).scrollIntoView?.({ block: "start" });
+  if (mode === "help") document.querySelector("#guide-desktop details").open = true;
+  if (scrollToTop) window.scrollTo(0, 0);
 }
 
-const modeTabs = [...document.querySelectorAll('[role="tab"]')];
-modeTabs.forEach((tab, index) => {
-  tab.addEventListener("click", () => showMode(tab.dataset.mode));
-  tab.addEventListener("keydown", event => {
-    let next;
-    if (event.key === "ArrowRight") next = (index + 1) % modeTabs.length;
-    if (event.key === "ArrowLeft") next = (index + modeTabs.length - 1) % modeTabs.length;
-    if (event.key === "Home") next = 0;
-    if (event.key === "End") next = modeTabs.length - 1;
-    if (next === undefined) return;
-    event.preventDefault();
-    showMode(modeTabs[next].dataset.mode);
-    modeTabs[next].focus();
+const totalsBar = document.querySelector(".sticky-summary");
+if (typeof ResizeObserver === "function") {
+  new ResizeObserver(() => {
+    document.documentElement.style.setProperty("--totals-height", `${totalsBar.offsetHeight}px`);
+  }).observe(totalsBar);
+}
+
+function wireTabs(selector, onSelect) {
+  const tabs = [...document.querySelectorAll(`${selector} [role="tab"]`)];
+  function select(tab, options) {
+    for (const item of tabs) {
+      item.setAttribute("aria-selected", String(item === tab));
+      item.tabIndex = item === tab ? 0 : -1;
+    }
+    onSelect(tab, options);
+  }
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => select(tab));
+    tab.addEventListener("keydown", event => {
+      let next;
+      if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+      if (event.key === "ArrowLeft") next = (index + tabs.length - 1) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      if (next === undefined) return;
+      event.preventDefault();
+      select(tabs[next]);
+      tabs[next].focus({ preventScroll: true });
+    });
   });
+  return select;
+}
+
+const selectMode = wireTabs(".mode-tabs", (tab, options) => showMode(tab.dataset.mode, options));
+wireTabs(".guide-tabs", tab => {
+  document.querySelectorAll('#panel-help [role="tabpanel"]').forEach(panel => {
+    panel.hidden = panel.id !== tab.getAttribute("aria-controls");
+  });
+  document.querySelector(`#${tab.getAttribute("aria-controls")} details`)?.setAttribute("open", "");
 });
 document.addEventListener("keydown", event => {
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !event.isComposing && !event.repeat) {
