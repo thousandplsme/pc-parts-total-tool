@@ -235,13 +235,13 @@ function check(callback) { callback(); assertions++; }
   imported.forEach((row, index) => check(() => assert.equal(row.querySelector('.type').value, aliases[index][1])));
   set('#import-text', '  gpu : RTX 5070:追記\n未知：型番\nGPU：\n  <script>alert(1)</script>  \n\n  \n');
   $('#import-parts').click();
-  imported = [...document.querySelectorAll('.part')].slice(-4);
+  imported = [...document.querySelectorAll('.part')].slice(-3);
   check(() => assert.equal(imported[0].querySelector('.type').value, 'GPU'));
   check(() => assert.equal(imported[0].querySelector('.model').value, 'RTX 5070:追記'));
   check(() => assert.equal(imported[1].querySelector('.model').value, '未知：型番'));
   check(() => assert.equal(imported[1].querySelector('.type').value, 'その他'));
-  check(() => assert.equal(imported[2].querySelector('.model').value, 'GPU：'));
-  check(() => assert.equal(imported[3].querySelector('.model').value, '  <script>alert(1)</script>  '));
+  check(() => assert.equal(text('#import-status'), '3行取り込みました（既存行の末尾に追加）。'));
+  check(() => assert.equal(imported[2].querySelector('.model').value, '  <script>alert(1)</script>  '));
   check(() => assert.equal(document.querySelectorAll('.part script').length, 0));
   const beforeEmptyImport = document.querySelectorAll('.part').length;
   set('#import-text', '\n  \n');

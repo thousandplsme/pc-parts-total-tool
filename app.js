@@ -280,21 +280,31 @@ function addPart(type = "その他", focus = true, model = "") {
 
 TYPES.slice(0, 8).forEach(type => addPart(type, false));
 document.querySelector("#add").addEventListener("click", () => addPart());
+const importText = document.querySelector("#import-text");
+const importStatus = document.querySelector("#import-status");
+document.querySelector("#reset-import-template").addEventListener("click", () => {
+  importText.value = importText.defaultValue;
+  importStatus.textContent = "";
+});
 document.querySelector("#import-parts").addEventListener("click", () => {
   const firstNewIndex = parts.length;
-  const lines = document.querySelector("#import-text").value.split(/\r\n|[\r\n]/).filter(line => line.trim());
+  const lines = importText.value.split(/\r\n|[\r\n]/);
   for (const line of lines) {
-    const match = line.match(/^([^:：]+)[:：](.*)$/);
+    if (!line.trim()) continue;
+    const match = line.match(/^([^:：]*)[:：](.*)$/);
+    const model = match?.[2].trim();
+    if (match && !model) continue;
     const type = match && CATEGORY_ALIASES.get(match[1].trim().toUpperCase());
-    // 未知のカテゴリや型番のない行も落とさず、元の行全体を「その他」に残す。
-    if (type && match[2].trim()) addPart(type, false, match[2].trim());
+    // 未知のカテゴリやコロンのない行は、元の行全体を「その他」に残す。
+    if (type) addPart(type, false, model);
     else addPart("その他", false, line);
   }
-  document.querySelector("#import-status").textContent = lines.length
-    ? `${lines.length}行取り込みました（既存行の末尾に追加）。`
+  const importedCount = parts.length - firstNewIndex;
+  importStatus.textContent = importedCount
+    ? `${importedCount}行取り込みました（既存行の末尾に追加）。`
     : "取り込む行がありません（空行は除外します）。";
-  if (lines.length) {
-    document.querySelector("#parts-import-status").textContent = document.querySelector("#import-status").textContent;
+  if (importedCount) {
+    document.querySelector("#parts-import-status").textContent = importStatus.textContent;
     selectMode(document.querySelector("#tab-parts"), { scrollToTop: false });
     const firstModel = rows.children[firstNewIndex].querySelector(".model");
     firstModel.scrollIntoView?.({ block: "center" });
