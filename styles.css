@@ -18,6 +18,15 @@ p { margin: 0; }
 .notice { background: #fff9e9; border: 1px solid #d7b565; border-left: 4px solid #ac7810; border-radius: 6px; padding: 13px 16px; margin-bottom: 24px; }
 .notice span { display: block; font-size: .875rem; margin-top: 3px; }
 .workspace, .memo-section { background: white; border: 1px solid #d9e1e7; border-radius: 10px; padding: 20px; }
+.import-section { background: white; border: 1px solid #d9e1e7; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+.import-section label { margin-top: 10px; }
+.import-section textarea { min-height: 130px; }
+.import-section button { margin-top: 12px; }
+#import-status { margin-top: 6px; }
+.viewing-points { margin-top: 6px; font-size: .875rem; }
+.viewing-points summary { cursor: pointer; color: #176778; }
+.viewing-points p { margin-top: 5px; overflow-wrap: anywhere; }
+@media print { .import-section { display: none; } }
 .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
 .hint, .privacy, footer { color: #526270; font-size: .875rem; }
 button, input, select, textarea { font: inherit; }

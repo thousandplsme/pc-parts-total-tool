@@ -178,6 +178,76 @@ function check(callback) { callback(); assertions++; }
   check(() => assert.equal(document.querySelectorAll('.part').length, 1));
   check(() => assert.equal($('.type').value, 'その他'));
   check(() => assert.equal(document.querySelectorAll('[src^="https:"], [href^="https:"]').length, 0));
+  const expectedPoints = {
+    GPU: '型番の世代とグレード、VRAM容量を確認。検索結果には「単体」と「搭載PC」が混ざるので、価格は単体のものだけを採用する',
+    CPU: 'Intel／AMD、世代、末尾の文字（K＝オーバークロック可、F＝内蔵GPUなし）を確認',
+    RAM: 'DDRの世代（4か5）、容量、枚数を確認。デスクトップ用とノート用は別物',
+    マザーボード: '対応ソケットとチップセット、サイズ（ATX／microATX等）を確認',
+    SSD: 'NVMeかSATAか、容量を確認。健康状態は別途ツールで確認する',
+    HDD: '容量と使用時間を確認。使用時間が長いものは価格が付きにくい',
+    電源: '容量（W数）と80PLUS認証の有無を確認',
+    ケース: 'サイズと、側面パネル等の付属品が揃っているかを確認',
+    クーラー: '対応ソケットと、付属品（取り付け金具）が揃っているかを確認',
+    OS: 'エディション（Home／Pro）とライセンスの有無を確認',
+    その他: '型番が正確に控えられているかを最初に確認する'
+  };
+  for (const [category, points] of Object.entries(expectedPoints)) {
+    set('.type', category, 'change');
+    check(() => assert.equal($('.viewing-points').open, false));
+    check(() => assert.equal(text('.viewing-points p'), points));
+    $('.viewing-points summary').click();
+    check(() => assert.equal($('.viewing-points').open, true));
+    $('.viewing-points summary').click();
+    check(() => assert.equal($('.viewing-points').open, false));
+  }
+  set('.model', '既存の型番');
+  set('.price', '100');
+  set('#import-text', 'GPU：RTX 5070\r\nCPU：Core i7-12700\r\nRAM：DDR4 16GB×2\r\nSSD：NVMe 1TB\r\n型番だけのメモ');
+  $('#import-parts').click();
+  let imported = [...document.querySelectorAll('.part')].slice(1);
+  check(() => assert.equal(imported.length, 5));
+  check(() => assert.equal($('.model').value, '既存の型番'));
+  check(() => assert.equal($('.price').value, '100'));
+  check(() => assert.equal(text('#import-status'), '5行取り込みました（既存行の末尾に追加）。'));
+  const expectedParts = [['GPU', 'RTX 5070'], ['CPU', 'Core i7-12700'], ['RAM', 'DDR4 16GB×2'], ['SSD', 'NVMe 1TB'], ['その他', '型番だけのメモ']];
+  imported.forEach((row, index) => {
+    check(() => assert.equal(row.querySelector('.type').value, expectedParts[index][0]));
+    check(() => assert.equal(row.querySelector('.model').value, expectedParts[index][1]));
+    check(() => assert.equal(row.querySelector('.state').value, '不明'));
+    check(() => assert.equal(row.querySelector('.price').value, ''));
+    check(() => assert.equal(row.querySelectorAll('.links a').length, 6));
+    check(() => assert.equal(row.querySelector('.viewing-points').open, false));
+  });
+  let previousOpenCount = opened.length;
+  imported[0].querySelector('.open-major').click();
+  check(() => assert.equal(opened.length, previousOpenCount + 1));
+  check(() => assert.equal(opened.at(-1)[0], expectedUrls[0]));
+  imported[0].querySelector('.price').value = '110000';
+  imported[0].querySelector('.price').dispatchEvent(new window.Event('input', { bubbles: true }));
+  set('#kake', '5');
+  check(() => assert.equal(text('#sum'), '110,100'));
+  check(() => assert.equal(text('#sticky-estimate'), '55,050'));
+  check(() => assert.ok($('#memo').value.includes('GPU / RTX 5070')));
+  const aliases = [['グラボ','GPU'],['グラフィックボード','GPU'],['プロセッサ','CPU'],['メモリ','RAM'],['マザボ','マザーボード'],['MB','マザーボード'],['PSU','電源'],['クーラー','クーラー'],['OS','OS'],['その他','その他'],['マザーボード','マザーボード'],['HDD','HDD'],['ケース','ケース'],['電源','電源']];
+  set('#import-text', aliases.map(([alias]) => `${alias}:テスト`).join('\n'));
+  $('#import-parts').click();
+  imported = [...document.querySelectorAll('.part')].slice(-aliases.length);
+  imported.forEach((row, index) => check(() => assert.equal(row.querySelector('.type').value, aliases[index][1])));
+  set('#import-text', '  gpu : RTX 5070:追記\n未知：型番\nGPU：\n  <script>alert(1)</script>  \n\n  \n');
+  $('#import-parts').click();
+  imported = [...document.querySelectorAll('.part')].slice(-4);
+  check(() => assert.equal(imported[0].querySelector('.type').value, 'GPU'));
+  check(() => assert.equal(imported[0].querySelector('.model').value, 'RTX 5070:追記'));
+  check(() => assert.equal(imported[1].querySelector('.model').value, '未知：型番'));
+  check(() => assert.equal(imported[1].querySelector('.type').value, 'その他'));
+  check(() => assert.equal(imported[2].querySelector('.model').value, 'GPU：'));
+  check(() => assert.equal(imported[3].querySelector('.model').value, '  <script>alert(1)</script>  '));
+  check(() => assert.equal(document.querySelectorAll('.part script').length, 0));
+  const beforeEmptyImport = document.querySelectorAll('.part').length;
+  set('#import-text', '\n  \n');
+  $('#import-parts').click();
+  check(() => assert.equal(document.querySelectorAll('.part').length, beforeEmptyImport));
+  check(() => assert.ok(text('#import-status').includes('取り込む行がありません')));
   console.log(`PASS: ${assertions} assertions (DOM integration; real browser/print/clipboard policies not simulated)`);
   window.close();
 })().catch(error => { console.error(error); process.exitCode = 1; window.close(); });

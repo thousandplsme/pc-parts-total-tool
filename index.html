@@ -6,8 +6,8 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>自作PC買取｜パーツ合算ツール</title>
-  <link rel="stylesheet" href="styles.css?v=20261124-1">
-  <script src="app.js?v=20261124-1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261125-1">
+  <script src="app.js?v=20261125-1" defer></script>
 </head>
 <body>
 <aside class="sticky-summary" aria-label="合算と目安の固定表示">
@@ -26,6 +26,14 @@
     <strong>合算は売価の合計であり、査定額そのものではありません。</strong>
     <span>買取目安は参考値です。状態・動作・付属品を確認し、最終判断は人が行ってください。</span>
   </aside>
+  <section class="import-section" aria-labelledby="import-title">
+    <h2 id="import-title">メモから取り込む</h2>
+    <label for="import-text">スペックのメモ</label>
+    <textarea id="import-text" rows="5" placeholder="GPU：RTX 5070&#10;CPU：Core i7-12700&#10;メモリ：DDR4 16GB×2&#10;SSD：NVMe 1TB&#10;型番だけの行も取り込めます" aria-describedby="import-help" spellcheck="false"></textarea>
+    <p id="import-help" class="hint">「カテゴリ名：型番」を1行ずつ入力。半角の : も使えます。形式外の行は行全体を「その他」として追加します。空行は除外し、既存の行は残します。</p>
+    <button id="import-parts" type="button" class="primary">取り込む</button>
+    <p id="import-status" class="hint" role="status"></p>
+  </section>
   <section class="workspace" aria-labelledby="parts-title">
     <div class="section-heading">
       <div><h2 id="parts-title">パーツ入力</h2><p class="hint">Tabで次の項目へ · Ctrl / ⌘ + Enterで行追加</p></div>

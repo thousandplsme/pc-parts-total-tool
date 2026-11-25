@@ -1,6 +1,26 @@
 "use strict";
 
-const TYPES = ["CPU", "GPU", "RAM", "マザーボード", "SSD", "HDD", "電源", "ケース", "OS", "その他"];
+const TYPES = ["CPU", "GPU", "RAM", "マザーボード", "SSD", "HDD", "電源", "ケース", "クーラー", "OS", "その他"];
+const CATEGORY_ALIASES = new Map([
+  ["GPU", "GPU"], ["グラボ", "GPU"], ["グラフィックボード", "GPU"],
+  ["CPU", "CPU"], ["プロセッサ", "CPU"], ["RAM", "RAM"], ["メモリ", "RAM"],
+  ["マザーボード", "マザーボード"], ["マザボ", "マザーボード"], ["MB", "マザーボード"],
+  ["SSD", "SSD"], ["HDD", "HDD"], ["電源", "電源"], ["PSU", "電源"],
+  ["ケース", "ケース"], ["クーラー", "クーラー"], ["OS", "OS"], ["その他", "その他"]
+]);
+const VIEWING_POINTS = {
+  GPU: "型番の世代とグレード、VRAM容量を確認。検索結果には「単体」と「搭載PC」が混ざるので、価格は単体のものだけを採用する",
+  CPU: "Intel／AMD、世代、末尾の文字（K＝オーバークロック可、F＝内蔵GPUなし）を確認",
+  RAM: "DDRの世代（4か5）、容量、枚数を確認。デスクトップ用とノート用は別物",
+  マザーボード: "対応ソケットとチップセット、サイズ（ATX／microATX等）を確認",
+  SSD: "NVMeかSATAか、容量を確認。健康状態は別途ツールで確認する",
+  HDD: "容量と使用時間を確認。使用時間が長いものは価格が付きにくい",
+  電源: "容量（W数）と80PLUS認証の有無を確認",
+  ケース: "サイズと、側面パネル等の付属品が揃っているかを確認",
+  クーラー: "対応ソケットと、付属品（取り付け金具）が揃っているかを確認",
+  OS: "エディション（Home／Pro）とライセンスの有無を確認",
+  その他: "型番が正確に控えられているかを最初に確認する"
+};
 const STATES = ["不明", "動作品", "ジャンク"];
 const SITES = [
   ["オークフリー", q => `https://aucfree.com/search?o=t2&q=${q}`],
@@ -118,14 +138,14 @@ function refreshLinks(element, model) {
 }
 
 let nextId = 0;
-function addPart(type = "その他", focus = true) {
-  const part = { type, model: "", state: "不明", price: null };
+function addPart(type = "その他", focus = true, model = "") {
+  const part = { type, model, state: "不明", price: null };
   const id = `part-${++nextId}`;
   const element = document.createElement("div");
   element.className = "part";
   // 固定のUIだけをHTMLで構築。入力値はvalue/textContentに設定する。
   element.innerHTML = `<div class="fields">
-    <div class="field-type"><label for="${id}-type">種別</label><select id="${id}-type" class="type"></select></div>
+    <div class="field-type"><label for="${id}-type">種別</label><select id="${id}-type" class="type"></select><details class="viewing-points"><summary>見るポイント</summary><p></p></details></div>
     <div class="field-model"><label for="${id}-model">型番・仕様</label><input id="${id}-model" class="model" type="text" autocomplete="off" spellcheck="false" placeholder="例：Core i7-12700 / RTX 3060"></div>
     <div class="field-state"><label for="${id}-state">状態</label><select id="${id}-state" class="state"></select></div>
     <div class="field-price"><label for="${id}-price">採用価格（円）</label><input id="${id}-price" class="price" type="text" inputmode="numeric" autocomplete="off" placeholder="未入力" aria-describedby="${id}-error"><p id="${id}-error" class="price-error error"></p></div>
@@ -147,7 +167,13 @@ function addPart(type = "その他", focus = true) {
     values.forEach(value => select.add(new Option(value, value)));
     select.value = selected;
   }
-  element.querySelector(".type").addEventListener("change", event => { part.type = event.target.value; update(); });
+  element.querySelector(".model").value = model;
+  element.querySelector(".viewing-points p").textContent = VIEWING_POINTS[type];
+  element.querySelector(".type").addEventListener("change", event => {
+    part.type = event.target.value;
+    element.querySelector(".viewing-points p").textContent = VIEWING_POINTS[part.type];
+    update();
+  });
   element.querySelector(".state").addEventListener("change", event => { part.state = event.target.value; update(); });
   element.querySelector(".model").addEventListener("input", event => {
     part.model = event.target.value;
@@ -173,13 +199,26 @@ function addPart(type = "その他", focus = true) {
   });
   parts.push(part);
   rows.append(element);
-  refreshLinks(element, "");
+  refreshLinks(element, model);
   update();
   if (focus) element.querySelector(".type").focus();
 }
 
 TYPES.slice(0, 8).forEach(type => addPart(type, false));
 document.querySelector("#add").addEventListener("click", () => addPart());
+document.querySelector("#import-parts").addEventListener("click", () => {
+  const lines = document.querySelector("#import-text").value.split(/\r\n|[\r\n]/).filter(line => line.trim());
+  for (const line of lines) {
+    const match = line.match(/^([^:：]+)[:：](.*)$/);
+    const type = match && CATEGORY_ALIASES.get(match[1].trim().toUpperCase());
+    // 未知のカテゴリや型番のない行も落とさず、元の行全体を「その他」に残す。
+    if (type && match[2].trim()) addPart(type, false, match[2].trim());
+    else addPart("その他", false, line);
+  }
+  document.querySelector("#import-status").textContent = lines.length
+    ? `${lines.length}行取り込みました（既存行の末尾に追加）。`
+    : "取り込む行がありません（空行は除外します）。";
+});
 document.addEventListener("keydown", event => {
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !event.isComposing && !event.repeat) {
     event.preventDefault();
