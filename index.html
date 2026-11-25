@@ -6,8 +6,8 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>自作PC買取｜パーツ合算ツール</title>
-  <link rel="stylesheet" href="styles.css?v=20261125-1">
-  <script src="app.js?v=20261125-1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261125-2">
+  <script src="app.js?v=20261125-2" defer></script>
 </head>
 <body>
 <aside class="sticky-summary" aria-label="合算と目安の固定表示">
@@ -26,6 +26,22 @@
     <strong>合算は売価の合計であり、査定額そのものではありません。</strong>
     <span>買取目安は参考値です。状態・動作・付属品を確認し、最終判断は人が行ってください。</span>
   </aside>
+  <details class="research-help">
+    <summary>パーツの調べ方（msinfo32／タスクマネージャー）</summary>
+    <div class="help-text">■ msinfo32（システム情報）
+1. Windowsキー＋R を押す
+2. 「msinfo32」と入力して Enter
+3. 「システムの要約」でプロセッサ（CPU）と実装メモリ（RAM容量）が分かる
+4. 左の「コンポーネント」→「ディスプレイ」でグラフィックボード（GPU）が分かる
+■ タスクマネージャー
+1. Ctrl＋Shift＋Esc を押す
+2. 「パフォーマンス」タブを開く
+3. CPU（型番）、メモリ（容量と速度）、ディスク（SSD／HDDの別と容量）、GPU（型番とVRAM）が1画面ずつ確認できる
+4. 型番はそのままこのツールに貼ればよい
+■ 分からないとき
+- 型番だけ控えて、このツールの「この型番を調べる」から調べる
+- ノートPCは型番シール（底面）も写真に撮っておくと後で確認できる</div>
+  </details>
   <section class="import-section" aria-labelledby="import-title">
     <h2 id="import-title">メモから取り込む</h2>
     <label for="import-text">スペックのメモ</label>
@@ -41,7 +57,7 @@
     </div>
     <div id="rows"></div>
     <p id="empty" class="hint" hidden>パーツがありません。「パーツを追加」から入力してください。</p>
-    <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンク・「次のサイトを開く」を使うと、その行の型番が各リンク先サイトに送信されます（別タブ）。価格・状態は送信しません。<br>「次のサイトを開く」はオークフリー、パソコン工房、ドスパラを1クリックにつき1サイトずつ開きます。型番を変更すると順番は最初に戻ります。</p>
+    <p class="privacy">入力内容はこの画面内だけで処理し、保存・自動送信しません。再読み込みで消えます。<br>検索リンク・順次／一括オープンを使うと、その行の型番が各リンク先サイトに送信されます。「この型番を調べる」はGoogleに送信します（別タブ）。価格・状態は送信しません。<br>「次のサイトを開く」はオークフリー、パソコン工房、ドスパラを1クリックにつき1サイトずつ開きます。型番を変更すると順番は最初に戻ります。</p>
   </section>
   <section class="summary" aria-labelledby="summary-title">
     <div class="total"><h2 id="summary-title">売価合算</h2><p class="money"><span id="sum">0</span><small> 円</small></p><p id="price-status" class="hint"></p><p class="kake-description hint">5掛け（売価の50%）</p></div>

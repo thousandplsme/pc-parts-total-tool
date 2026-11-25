@@ -26,6 +26,16 @@ p { margin: 0; }
 .viewing-points { margin-top: 6px; font-size: .875rem; }
 .viewing-points summary { cursor: pointer; color: #176778; }
 .viewing-points p { margin-top: 5px; overflow-wrap: anywhere; }
+.research-help { background: white; border: 1px solid #d9e1e7; border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; }
+.research-help summary { cursor: pointer; font-weight: 600; }
+.help-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 12px; }
+.category-hint { margin-top: 6px; font-size: .875rem; }
+.category-hint:empty { display: none; }
+.category-hint button { padding: 6px 10px; font-size: .875rem; }
+.category-hint a { color: #176778; text-underline-offset: 3px; }
+.open-all { padding: 6px 10px; font-size: .875rem; margin: 0 0 6px 10px; }
+.popup-note { margin-bottom: 6px; }
+@media print { .research-help { display: none; } }
 @media print { .import-section { display: none; } }
 .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
 .hint, .privacy, footer { color: #526270; font-size: .875rem; }

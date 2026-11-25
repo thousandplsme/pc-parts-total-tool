@@ -110,6 +110,7 @@ function refreshLinks(element, model) {
   const expanded = container.querySelector("details")?.open || false;
   container.replaceChildren();
   element.querySelector(".open-major").disabled = !model.trim();
+  element.querySelector(".open-all").disabled = !model.trim();
   if (!model.trim()) {
     const hint = document.createElement("span");
     hint.textContent = "型番を入力すると、各サイトの検索リンクが表示されます。";
@@ -137,6 +138,44 @@ function refreshLinks(element, model) {
   container.append(primaryLinks, otherSites);
 }
 
+function suggestCategory(model) {
+  const text = model.normalize("NFKC");
+  if (/RTX|GTX|RX\s*[765]|Radeon|GeForce/i.test(text)) return { type: "GPU" };
+  if (/Core\s*i|Ryzen|Athlon|Celeron|Pentium/i.test(text)) return { type: "CPU" };
+  if (/DDR\s*[345]/i.test(text)) return { type: "RAM" };
+  const hasCapacity = /\d+(?:\.\d+)?\s*(?:TB|GB)\b/i.test(text);
+  if (hasCapacity && /NVMe|M\.2|SATA\s*SSD|SSD/i.test(text)) return { type: "SSD" };
+  if (hasCapacity && /HDD|WD|Seagate|BarraCuda/i.test(text)) return { type: "HDD" };
+  if (/80\s*PLUS|\b[1-9]\d{2,3}\s*W\b/i.test(text)) return { type: "電源", weak: true };
+  return null;
+}
+
+function refreshCategoryHint(element, part) {
+  const hint = element.querySelector(".category-hint");
+  hint.replaceChildren();
+  if (!["その他", "不明"].includes(part.type) || !part.model.trim()) return;
+  const candidate = suggestCategory(part.model);
+  if (candidate) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = `候補：${candidate.type}を採用${candidate.weak ? "（弱い候補）" : ""}`;
+    button.addEventListener("click", () => {
+      const select = element.querySelector(".type");
+      select.value = candidate.type;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      select.focus();
+    });
+    hint.append(button);
+  } else {
+    const link = document.createElement("a");
+    link.textContent = "この型番を調べる";
+    link.href = `https://www.google.com/search?q=${encodeURIComponent(part.model.trim())}`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    hint.append(link);
+  }
+}
+
 let nextId = 0;
 function addPart(type = "その他", focus = true, model = "") {
   const part = { type, model, state: "不明", price: null };
@@ -146,11 +185,18 @@ function addPart(type = "その他", focus = true, model = "") {
   // 固定のUIだけをHTMLで構築。入力値はvalue/textContentに設定する。
   element.innerHTML = `<div class="fields">
     <div class="field-type"><label for="${id}-type">種別</label><select id="${id}-type" class="type"></select><details class="viewing-points"><summary>見るポイント</summary><p></p></details></div>
-    <div class="field-model"><label for="${id}-model">型番・仕様</label><input id="${id}-model" class="model" type="text" autocomplete="off" spellcheck="false" placeholder="例：Core i7-12700 / RTX 3060"></div>
+    <div class="field-model"><label for="${id}-model">型番・仕様</label><input id="${id}-model" class="model" type="text" autocomplete="off" spellcheck="false" placeholder="例：Core i7-12700 / RTX 3060"><div class="category-hint"></div></div>
     <div class="field-state"><label for="${id}-state">状態</label><select id="${id}-state" class="state"></select></div>
     <div class="field-price"><label for="${id}-price">採用価格（円）</label><input id="${id}-price" class="price" type="text" inputmode="numeric" autocomplete="off" placeholder="未入力" aria-describedby="${id}-error"><p id="${id}-error" class="price-error error"></p></div>
     <button type="button" class="delete">削除</button>
-    </div><div class="search-controls"><button type="button" class="open-major" disabled>次のサイトを開く</button><span class="site-progress" role="status">0/3 まだ開いていません</span><div class="links"></div></div>`;
+    </div><div class="search-controls"><button type="button" class="open-major" disabled>次のサイトを開く</button><span class="site-progress" role="status">0/3 まだ開いていません</span><button type="button" class="open-all" disabled aria-describedby="${id}-popup-note">主要3サイトを一括で開く</button><p class="hint popup-note" id="${id}-popup-note">一括オープンはブラウザのポップアップ許可が必要です。開かない場合は『次のサイトを開く』を使ってください</p><div class="links"></div></div>`;
+  element.querySelector(".open-all").addEventListener("click", () => {
+    const model = part.model.trim();
+    if (!model) return;
+    for (const [, searchUrl] of SITES.slice(0, 3)) {
+      window.open(searchUrl(encodeURIComponent(model)), "_blank", "noopener,noreferrer");
+    }
+  });
   let nextSite = 0;
   element.querySelector(".open-major").addEventListener("click", () => {
     const model = part.model.trim();
@@ -172,6 +218,7 @@ function addPart(type = "その他", focus = true, model = "") {
   element.querySelector(".type").addEventListener("change", event => {
     part.type = event.target.value;
     element.querySelector(".viewing-points p").textContent = VIEWING_POINTS[part.type];
+    refreshCategoryHint(element, part);
     update();
   });
   element.querySelector(".state").addEventListener("change", event => { part.state = event.target.value; update(); });
@@ -180,6 +227,7 @@ function addPart(type = "その他", focus = true, model = "") {
     nextSite = 0;
     element.querySelector(".site-progress").textContent = "0/3 まだ開いていません";
     refreshLinks(element, part.model);
+    refreshCategoryHint(element, part);
     update();
   });
   const price = element.querySelector(".price");
@@ -200,6 +248,7 @@ function addPart(type = "その他", focus = true, model = "") {
   parts.push(part);
   rows.append(element);
   refreshLinks(element, model);
+  refreshCategoryHint(element, part);
   update();
   if (focus) element.querySelector(".type").focus();
 }

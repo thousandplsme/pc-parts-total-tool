@@ -248,6 +248,81 @@ function check(callback) { callback(); assertions++; }
   $('#import-parts').click();
   check(() => assert.equal(document.querySelectorAll('.part').length, beforeEmptyImport));
   check(() => assert.ok(text('#import-status').includes('取り込む行がありません')));
+  $('#add').click();
+  const last = selector => document.querySelector(`.part:last-child ${selector}`);
+  const setLastModel = value => set('.part:last-child .model', value);
+  check(() => assert.equal(last('.open-all').disabled, true));
+  const candidateCases = [
+    ['RTX 3060','GPU'], ['GTX 1650','GPU'], ['RX 7900 XT','GPU'], ['RX 6600','GPU'], ['RX 580','GPU'], ['Radeon','GPU'], ['GeForce','GPU'],
+    ['Ryzen 7 7800X3D','CPU'], ['Core i7-12700','CPU'], ['Athlon 3000G','CPU'], ['Celeron G5900','CPU'], ['Pentium G6400','CPU'],
+    ['DDR5 32GB','RAM'], ['DDR4 16GB','RAM'], ['DDR3 8GB','RAM'],
+    ['NVMe 1TB','SSD'], ['M.2 512GB','SSD'], ['SATA SSD 500GB','SSD'], ['SSD 2TB','SSD'],
+    ['HDD 4TB','HDD'], ['WD Blue 1TB','HDD'], ['Seagate 2TB','HDD'], ['BarraCuda 500GB','HDD'],
+    ['750W','電源'], ['80PLUS Gold','電源'], ['ｒｔｘ ３０６０','GPU']
+  ];
+  for (const [model, category] of candidateCases) {
+    setLastModel(model);
+    check(() => assert.ok(last('.category-hint button').textContent.includes(`${category}を採用`)));
+    check(() => assert.equal(last('.type').value, 'その他'));
+    check(() => assert.equal(last('.category-hint a'), null));
+    if (category === '電源') check(() => assert.ok(last('.category-hint button').textContent.includes('弱い候補')));
+  }
+  setLastModel('RTX 3060');
+  last('.open-major').click();
+  const progressBeforeBulk = last('.site-progress').textContent;
+  const beforeBulk = opened.length;
+  last('.open-all').click();
+  check(() => assert.equal(opened.length, beforeBulk + 3));
+  check(() => assert.deepEqual(opened.slice(-3).map(args => args[0]), expectedUrls.slice(0, 3).map(url => url.replace('5070','3060'))));
+  check(() => assert.equal(last('.site-progress').textContent, progressBeforeBulk));
+  check(() => assert.equal(last('.open-all').textContent, '主要3サイトを一括で開く'));
+  check(() => assert.equal(last('.popup-note').textContent, '一括オープンはブラウザのポップアップ許可が必要です。開かない場合は『次のサイトを開く』を使ってください'));
+  last('.category-hint button').click();
+  check(() => assert.equal(last('.type').value, 'GPU'));
+  check(() => assert.equal(last('.category-hint').textContent, ''));
+  check(() => assert.equal(last('.viewing-points p').textContent, expectedPoints.GPU));
+  check(() => assert.ok($('#memo').value.includes('GPU / RTX 3060')));
+  setLastModel('DDR5 32GB');
+  check(() => assert.equal(last('.type').value, 'GPU'));
+  check(() => assert.equal(last('.category-hint').textContent, ''));
+  set('.part:last-child .type', 'その他', 'change');
+  check(() => assert.ok(last('.category-hint button').textContent.includes('RAM')));
+  for (const model of ['型番不明 & 日本語', 'NVMe', 'WD Blue', 'SSD']) {
+    setLastModel(model);
+    check(() => assert.equal(last('.category-hint button'), null));
+    check(() => assert.equal(last('.category-hint a').href, `https://www.google.com/search?q=${encodeURIComponent(model)}`));
+    check(() => assert.equal(last('.category-hint a').textContent, 'この型番を調べる'));
+  }
+  setLastModel('');
+  check(() => assert.equal(last('.category-hint').textContent, ''));
+  check(() => assert.equal(last('.open-all').disabled, true));
+  set('#import-text','RTX 3060\nRyzen 7 7800X3D\nDDR5 32GB\n不明なパーツ');
+  $('#import-parts').click();
+  imported=[...document.querySelectorAll('.part')].slice(-4);
+  imported.slice(0,3).forEach((row,index)=> {
+    check(() => assert.equal(row.querySelector('.type').value, 'その他'));
+    check(() => assert.ok(row.querySelector('.category-hint button').textContent.includes(['GPU','CPU','RAM'][index])));
+  });
+  check(() => assert.equal(imported[3].querySelector('.category-hint a').textContent, 'この型番を調べる'));
+  const expectedHelp = `■ msinfo32（システム情報）
+1. Windowsキー＋R を押す
+2. 「msinfo32」と入力して Enter
+3. 「システムの要約」でプロセッサ（CPU）と実装メモリ（RAM容量）が分かる
+4. 左の「コンポーネント」→「ディスプレイ」でグラフィックボード（GPU）が分かる
+■ タスクマネージャー
+1. Ctrl＋Shift＋Esc を押す
+2. 「パフォーマンス」タブを開く
+3. CPU（型番）、メモリ（容量と速度）、ディスク（SSD／HDDの別と容量）、GPU（型番とVRAM）が1画面ずつ確認できる
+4. 型番はそのままこのツールに貼ればよい
+■ 分からないとき
+- 型番だけ控えて、このツールの「この型番を調べる」から調べる
+- ノートPCは型番シール（底面）も写真に撮っておくと後で確認できる`;
+  check(() => assert.equal($('.help-text').textContent, expectedHelp));
+  check(() => assert.equal($('.research-help').open, false));
+  $('.research-help summary').click();
+  check(() => assert.equal($('.research-help').open, true));
+  $('.research-help summary').click();
+  check(() => assert.equal($('.research-help').open, false));
   console.log(`PASS: ${assertions} assertions (DOM integration; real browser/print/clipboard policies not simulated)`);
   window.close();
 })().catch(error => { console.error(error); process.exitCode = 1; window.close(); });
