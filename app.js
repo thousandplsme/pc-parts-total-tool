@@ -286,8 +286,8 @@ document.querySelector("#reset-import-template").addEventListener("click", () =>
   importText.value = importText.defaultValue;
   importStatus.textContent = "";
 });
-document.querySelector("#import-parts").addEventListener("click", () => {
-  const firstNewIndex = parts.length;
+function importParts() {
+  const before = parts.length;
   const lines = importText.value.split(/\r\n|[\r\n]/);
   for (const line of lines) {
     if (!line.trim()) continue;
@@ -299,10 +299,16 @@ document.querySelector("#import-parts").addEventListener("click", () => {
     if (type) addPart(type, false, model);
     else addPart("その他", false, line);
   }
-  const importedCount = parts.length - firstNewIndex;
+  const importedCount = parts.length - before;
   importStatus.textContent = importedCount
     ? `${importedCount}行取り込みました（既存行の末尾に追加）。`
     : "取り込む行がありません（空行は除外します）。";
+  return importedCount;
+}
+
+document.querySelector("#import-parts").addEventListener("click", () => {
+  const firstNewIndex = parts.length;
+  const importedCount = importParts();
   if (importedCount) {
     document.querySelector("#parts-import-status").textContent = importStatus.textContent;
     selectMode(document.querySelector("#tab-parts"), { scrollToTop: false });
@@ -363,10 +369,174 @@ wireTabs(".guide-tabs", tab => {
   document.querySelector(`#${tab.getAttribute("aria-controls")} details`)?.setAttribute("open", "");
 });
 document.addEventListener("keydown", event => {
-  if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !event.isComposing && !event.repeat) {
+  if ((!normalMain.hidden || (!guidedFlow.hidden && guideStep === 2 && guideList)) &&
+      (event.ctrlKey || event.metaKey) && event.key === "Enter" && !event.isComposing && !event.repeat) {
     event.preventDefault();
     addPart();
   }
+});
+
+const entry = document.querySelector("#guide-start");
+const guidedFlow = document.querySelector("#guided-flow");
+const normalMain = document.querySelector("#normal-main");
+const guideContent = document.querySelector("#guide-content");
+const guideTitle = document.querySelector("#guide-step-title");
+const importPanel = document.querySelector("#panel-import");
+const partsPanel = document.querySelector("#panel-parts");
+const importSection = importPanel.querySelector(".import-section");
+const workspace = partsPanel.querySelector(".workspace");
+const summary = partsPanel.querySelector(".summary");
+const memoSection = partsPanel.querySelector(".memo-section");
+const priceStatus = document.querySelector("#guide-price-status");
+const switchView = document.createElement("button");
+switchView.type = "button";
+switchView.className = "guide-view-switch";
+const currentPart = document.createElement("div");
+currentPart.className = "guide-current";
+let guideStep = 0;
+let guideList = false;
+let activeRow = null;
+const eligibleRows = () => [...rows.children].filter(row =>
+  row.querySelector(".model").value.trim() || row.querySelector(".price").value.trim());
+
+function restoreNormalSections() {
+  importPanel.append(importSection);
+  partsPanel.append(workspace, summary, memoSection);
+  workspace.classList.remove("guide-single");
+  for (const row of rows.children) row.hidden = false;
+  switchView.remove();
+  currentPart.remove();
+}
+
+function openNormal(returnToParts = false) {
+  restoreNormalSections();
+  entry.hidden = guidedFlow.hidden = true;
+  normalMain.hidden = document.querySelector(".top-bars").hidden = false;
+  const tab = returnToParts ? document.querySelector("#tab-parts")
+    : document.querySelector('.mode-tabs [aria-selected="true"]');
+  selectMode(tab);
+  tab.focus({ preventScroll: true });
+}
+
+function showGuide(step, { focus = true } = {}) {
+  guideStep = step;
+  restoreNormalSections();
+  normalMain.hidden = document.querySelector(".top-bars").hidden = true;
+  totalsBar.hidden = true;
+  document.body.classList.remove("has-fixed-totals");
+  entry.hidden = step !== 0;
+  guidedFlow.hidden = step === 0;
+  const copyInResult = step === 3;
+  guidedFlow.classList.toggle("guide-result", copyInResult);
+  document.querySelector("#guide-to-normal").hidden = copyInResult;
+  document.querySelector("#guide-memo-actions").hidden = step !== 1;
+  document.querySelector("#guide-price-actions").hidden = step !== 2;
+  document.querySelector("#guide-result-actions").hidden = !copyInResult;
+
+  if (step === 1) {
+    guideContent.append(importSection);
+  } else if (step === 2) {
+    const eligible = eligibleRows();
+    if (!eligible.includes(activeRow)) activeRow = eligible[0] ?? null;
+    if (!activeRow && !guideList) return showGuide(3);
+    workspace.classList.toggle("guide-single", !guideList);
+    switchView.textContent = guideList ? "1つずつ調べる" : "一覧でまとめて見る";
+    guideContent.append(switchView);
+    if (!guideList) {
+      const category = activeRow.querySelector(".type").value;
+      const model = activeRow.querySelector(".model").value;
+      const title = document.createElement("h2");
+      title.textContent = `${category} ／ ${model || "型番未入力"}`;
+      const points = document.createElement("p");
+      points.textContent = VIEWING_POINTS[category];
+      const position = document.createElement("p");
+      position.className = "hint";
+      position.textContent = `${eligible.indexOf(activeRow) + 1} / ${eligible.length} パーツ`;
+      const pointTitle = document.createElement("h3");
+      pointTitle.textContent = "見るポイント";
+      currentPart.replaceChildren(position, title, pointTitle, points);
+      if (category === "マザーボード") {
+        const note = document.createElement("p");
+        note.className = "hint";
+        note.textContent = "CPUとマザーボードの対応世代を確認してください。";
+        currentPart.append(note);
+      }
+      guideContent.append(currentPart);
+      for (const row of rows.children) row.hidden = row !== activeRow;
+    }
+    guideContent.append(workspace);
+    document.querySelector("#guide-price-next").hidden = guideList;
+    document.querySelector("#guide-price-skip").hidden = guideList;
+    document.querySelector("#guide-list-done").hidden = !guideList;
+    priceStatus.textContent = "";
+  } else if (copyInResult) {
+    guideContent.append(summary, memoSection);
+  }
+
+  if (step) guideTitle.textContent = `ステップ${step}／3 ${["", "パーツを控える", "価格を調べる", "結果"][step]}`;
+  window.scrollTo(0, 0);
+  if (focus) (step ? guideTitle : document.querySelector("#start-appraisal")).focus({ preventScroll: true });
+}
+
+document.querySelector("#start-appraisal").addEventListener("click", () => showGuide(1));
+document.querySelector("#open-normal").addEventListener("click", () => openNormal());
+document.querySelector("#guide-to-normal").addEventListener("click", () => openNormal(guideStep === 2));
+document.querySelector("#guide-edit").addEventListener("click", () => openNormal(true));
+document.querySelector("#return-guided").addEventListener("click", () => showGuide(guideStep));
+document.querySelector("#guide-import").addEventListener("click", () => {
+  if (!importParts()) return;
+  // 通常モードで入力済みのパーツも、共有リストの順番で確認する。
+  activeRow = eligibleRows()[0];
+  guideList = false;
+  showGuide(2);
+});
+switchView.addEventListener("click", () => {
+  guideList = !guideList;
+  showGuide(2, { focus: false });
+  if (guideStep === 2) switchView.focus({ preventScroll: true });
+  else guideTitle.focus({ preventScroll: true });
+});
+
+function advancePart(skipPrice) {
+  const price = activeRow.querySelector(".price");
+  const parsed = parsePrice(price.value);
+  if (!skipPrice && (parsed.error || parsed.value === null)) {
+    priceStatus.textContent = parsed.error || "価格を入力するか、「次へ（価格なしで進む）」を選んでください。";
+    price.focus();
+    return;
+  }
+  const eligible = eligibleRows();
+  const nextRow = eligible[eligible.indexOf(activeRow) + 1];
+  if (skipPrice) {
+    price.value = "";
+    update();
+  }
+  activeRow = nextRow ?? null;
+  showGuide(nextRow ? 2 : 3);
+}
+
+document.querySelector("#guide-price-next").addEventListener("click", () => advancePart(false));
+document.querySelector("#guide-price-skip").addEventListener("click", () => advancePart(true));
+document.querySelector("#guide-list-done").addEventListener("click", () => {
+  const invalidPrice = rows.querySelector('.price[aria-invalid="true"]');
+  if (invalidPrice) {
+    priceStatus.textContent = "採用価格の入力エラーを修正してください。";
+    invalidPrice.focus();
+    return;
+  }
+  showGuide(3);
+});
+document.querySelector("#guide-restart").addEventListener("click", () => {
+  rows.replaceChildren();
+  parts.length = 0;
+  kake.value = kake.defaultValue;
+  importText.value = importText.defaultValue;
+  importStatus.textContent = "";
+  document.querySelector("#parts-import-status").textContent = "";
+  guideList = false;
+  activeRow = null;
+  TYPES.slice(0, 8).forEach(type => addPart(type, false));
+  showGuide(1);
 });
 kake.addEventListener("input", update);
 document.querySelector("#print").addEventListener("click", () => window.print());

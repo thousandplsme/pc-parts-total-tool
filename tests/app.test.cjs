@@ -10,6 +10,8 @@ const dom = new JSDOM(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), {
 const { window } = dom;
 const document = window.document;
 window.eval(fs.readFileSync(path.join(root, 'app.js'), 'utf8'));
+window.scrollTo = () => {};
+document.querySelector('#open-normal').click();
 const $ = selector => document.querySelector(selector);
 const set = (selector, value, event = 'input') => {
   $(selector).value = value;

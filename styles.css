@@ -123,3 +123,31 @@ html:has(.has-fixed-totals) { scroll-padding-bottom: var(--totals-height, 120px)
 @media (max-width: 900px) { .fields { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); } .field-next { padding-top: 27px; } }
 @media (max-width: 540px) { .mode-tabs { padding: 6px 8px; gap: 4px; } .mode-tabs button { padding: 8px 3px; } .fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .fields .field-type { grid-column: 1 / -1; } .fields .field-model { grid-column: 1 / -1; } }
 @media print { .top-bars, #panel-help { display: none !important; } .has-fixed-totals { padding-bottom: 0; } #panel-parts[hidden] { display: block !important; } }
+
+#guide-start { position: relative; display: grid; place-items: center; min-height: 100vh; min-height: 100svh; }
+#start-appraisal { padding: 20px 28px; font-size: clamp(1.2rem, 5vw, 1.65rem); }
+.mode-link { padding: 3px 5px; border: 0; background: transparent; color: #176778; font-size: .875rem; text-decoration: underline; text-underline-offset: .2em; }
+#open-normal { position: absolute; top: 16px; right: 16px; }
+.normal-switch { max-width: 1220px; margin: auto; padding: 0 24px 6px; text-align: right; }
+#guided-flow { max-width: 760px; }
+.guide-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.guide-heading h1 { font-size: clamp(1.25rem, 4vw, 1.65rem); }
+#guided-flow .import-section { margin-bottom: 12px; }
+#guided-flow #import-parts, #guided-flow #print { display: none; }
+.guide-view-switch { margin-bottom: 12px; }
+.guide-current { background: white; border: 1px solid #d9e1e7; border-radius: 10px; padding: 16px 20px; margin-bottom: 10px; }
+.guide-current h2 { font-size: 1.35rem; overflow-wrap: anywhere; }
+.guide-current h3 { margin: 12px 0 4px; font-size: 1rem; }
+.guide-current p + .hint { margin-top: 8px; }
+.guide-single .section-heading, .guide-single .privacy, .guide-single #parts-import-status,
+.guide-single .field-type, .guide-single .field-model, .guide-single .row-details { display: none; }
+.guide-single .part { padding: 0; border: 0; }
+.guide-single .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#guide-price-actions, #guide-result-actions { margin-top: 12px; }
+.guide-result .money { font-size: clamp(1.8rem, 5vw, 2.6rem); }
+@media (max-width: 540px) {
+  .guide-single .fields { grid-template-columns: minmax(0, 1fr); }
+  .guide-single .field-next { padding-top: 0; }
+  .normal-switch { padding-inline: 8px; }
+}
+@media print { #guide-start, .guide-heading, #guide-memo-actions, #guide-price-actions, #guide-result-actions { display: none !important; } }

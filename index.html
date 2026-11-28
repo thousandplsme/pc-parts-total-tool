@@ -6,20 +6,45 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>自作PC買取｜パーツ合算ツール</title>
-  <link rel="stylesheet" href="styles.css?v=20261125-5">
-  <script src="app.js?v=20261125-6" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261128-1">
+  <script src="app.js?v=20261128-1" defer></script>
   <script src="compatibility.js?v=20261125-4" defer></script>
 </head>
-<body class="has-fixed-totals">
-<div class="top-bars">
+<body>
+<main id="guide-start">
+  <button id="start-appraisal" class="primary" type="button">買取査定をはじめる</button>
+  <button id="open-normal" class="mode-link" type="button">通常モードで開く</button>
+</main>
+<main id="guided-flow" hidden>
+  <div class="guide-heading">
+    <h1 id="guide-step-title" tabindex="-1"></h1>
+    <button id="guide-to-normal" class="mode-link" type="button">通常モードで開く</button>
+  </div>
+  <div id="guide-content"></div>
+  <div id="guide-memo-actions" hidden>
+    <button id="guide-import" class="primary" type="button">次へ</button>
+  </div>
+  <div id="guide-price-actions" hidden>
+    <button id="guide-price-next" class="primary" type="button">このパーツの価格を入れたら次へ</button>
+    <button id="guide-price-skip" type="button">次へ（価格なしで進む）</button>
+    <button id="guide-list-done" class="primary" type="button" hidden>結果を見る</button>
+    <p id="guide-price-status" class="hint" role="status"></p>
+  </div>
+  <div id="guide-result-actions" class="actions" hidden>
+    <button id="guide-restart" type="button">最初からやり直す</button>
+    <button id="guide-edit" type="button">通常モードで開く（修正用）</button>
+  </div>
+</main>
+<div class="top-bars" hidden>
   <nav class="mode-tabs" role="tablist" aria-label="モード切替">
     <button id="tab-import" type="button" role="tab" aria-controls="panel-import" aria-selected="false" tabindex="-1" data-mode="import">メモから作る</button>
     <button id="tab-parts" type="button" role="tab" aria-controls="panel-parts" aria-selected="true" data-mode="parts">パーツから入れる</button>
     <button id="tab-help" type="button" role="tab" aria-controls="panel-help" aria-selected="false" tabindex="-1" data-mode="help">PC査定のポイント</button>
     <button id="tab-compatibility" type="button" role="tab" aria-controls="panel-compatibility" aria-selected="false" tabindex="-1" data-mode="compatibility">互換性チェック</button>
   </nav>
+  <div class="normal-switch"><button id="return-guided" class="mode-link" type="button">ガイド付きに戻る</button></div>
 </div>
-<main>
+<main id="normal-main" hidden>
   <header>
     <p class="eyebrow">自作PC買取の査定補助</p>
     <h1>パーツ合算ツール</h1>
@@ -142,7 +167,7 @@ GPU：
   </div>
   <footer>外部の価格は自動取得しません。各サイトの情報を確認し、採用価格を手入力してください。</footer>
 </main>
-<aside class="sticky-summary" aria-label="合算と目安の固定表示">
+<aside class="sticky-summary" aria-label="合算と目安の固定表示" hidden>
   <div class="sticky-inner">
     <div><span>売価合算</span><p><strong id="sticky-sum">0</strong> 円</p></div>
     <div><span>買取目安（参考値）</span><p><strong id="sticky-estimate">0</strong> 円</p><p class="kake-description hint">5掛け（売価の50%）</p></div>
